@@ -5,6 +5,14 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import twilio from "twilio";
+import { generate } from "otp-generator";
+import { Otp } from "../models/otp.model.js";
+import nodemailer from "nodemailer";
+import Mailgen from "mailgen";
+import { response } from "express";
+import { otpValidation } from "../utils/otpValidation.js";
+import { Loyalty } from "../models/loyalty.model.js";
 
 const options = {
     httpOnly: true,
@@ -30,19 +38,14 @@ const generateAccessandRefreshToken = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { fullname, email, username, password } = req.body;
-    console.log(email);
-
-    //     if(fullname === "") {
-    //         throw new createApiError(400, "fullname is required")
-    //     }
+    const { firstname, email, username, role, description} = req.body;
     //     if (
     //         [fullname, email, username, password].some((field) => field?.trim() === "")
     //     ) {
     //         throw  createApiError(400, "All fields are required")
     //     }
 
-    if (!fullname || !email || !username || !password) {
+    if (!firstname && !email && !username && !role) {
         throw createApiError(400, "All field are required");
     }
 
@@ -54,106 +57,203 @@ const registerUser = asyncHandler(async (req, res) => {
         throw createApiError(409, "User with email or username already exist");
     }
 
-    const avatarLocalPath = req.files?.avatar[0]?.path;
+    const profilePictureLocalPath = req.files?.profilePicture[0]?.path;
 
-    let coverImageLocalPath;
-
-    if (
-        req.files &&
-        Array.isArray(req.files.coverImage) &&
-        req.files.coverImage.length > 0
-    ) {
-        coverImageLocalPath = req.files.coverImage[0].path;
+    if (!profilePictureLocalPath) {
+        throw createApiError(400, "Profile Picture is required");
     }
 
-    if (!avatarLocalPath) {
-        throw createApiError(400, "Avatar is required");
-    }
+    const profilePicture = await uploadOnCloudinary(profilePictureLocalPath);
 
-    const avatar = await uploadOnCloudinary(avatarLocalPath);
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
-
-    if (!avatar) {
-        throw createApiError(400, "Avatar is required");
+    if (!profilePicture) {
+        throw createApiError(500, "Server error while uploading profile picture");
     }
 
     const user = await User.create({
-        fullname,
-        avatar: avatar.url,
-        coverImage: coverImage?.url || "",
+        firstname,
+        profilePicture: profilePicture.url,
+        role,
         email,
-        password,
+        description,
         username: username.toLowerCase(),
     });
 
-    const createdUser = await User.findById(user._id).select(
-        "-password -refreshToken"
-    );
+    console.log("user" , user);
+
+    const createdUser = await User.findById(user._id).select(" -refreshToken");
+
+    console.log("createduser" , createdUser);
 
     if (!createdUser) {
         throw createApiError(500, "Something went wrong while creating User");
     }
 
-    return res
-        .status(201)
-
-        .json(ApiResponse(200, createdUser, "User create successfully"));
-});
-
-const loginUser = asyncHandler(async (req, res) => {
-    const { email, username, password } = req.body;
-
-    console.log(email, username, password);
-
-    if (!(username || email)) {
-        throw createApiError(400, "username or email is required");
-    }
-
-    if (!password) {
-        throw createApiError(400, "Password is required");
-    }
-
-    const user = await User.findOne({
-        $or: [{ username }, { email }],
+    const loyalty = await Loyalty.create({
+        user: user._id,
+        earnedPoints: 0,
+        redeemedPoints: 0,
+        balancePoints: 0,
     });
 
-    console.log(user);
-
-    if (!user) {
-        throw createApiError(404, "user does not exist");
+    // Check if loyalty creation was successful
+    if (!loyalty) {
+        throw createApiError(500, "Failed to create loyalty object");
     }
-
-    const isPasswordValid = await user.isPasswordCorrect(password);
-
-    console.log(isPasswordValid);
-
-    if (!isPasswordValid) {
-        throw createApiError(401, "Invalid user credentials");
-    }
-
-    const { accessToken, refreshToken } = await generateAccessandRefreshToken(
-        user._id
-    );
-
-    const loggedInUser = await User.findById(user._id).select(
-        "-password -refreshToken"
-    );
 
     return res
         .status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
-        .json(
-            ApiResponse(
-                200,
-                {
-                    user: loggedInUser,
-                    accessToken,
-                    refreshToken,
-                },
-                "User logged In Successfully"
-            )
-        );
+        .json(ApiResponse(200, createdUser, "User create successfully"));
+});
+
+const generateOtp = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        throw createApiError(400, "email is required");
+    }
+
+    const user = await User.findOne({
+        $or: [{ email }],
+    });
+
+    if (!user) {
+        throw createApiError(400, "user does not exist");
+    }
+
+    const otp = generate(4, {
+        upperCaseAlphabets: false,
+        lowerCaseAlphabets: false,
+        specialChars: false,
+    });
+
+    let cDate = new Date();
+
+    await Otp.findOneAndUpdate(
+        { email },
+        { otp, otpExpiration: new Date(cDate.getTime()) },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+            user: process.env.EMAIL,
+            pass: process.env.PASS,
+        },
+    });
+
+    let mailgenerator = new Mailgen({
+        theme: "default",
+        product: {
+            name: "BarberQueue",
+            link: "https://res.cloudinary.com/dabxtjbhp/image/upload/v1708787352/w6xh3i7tbvstrkzbrszh.jpg ",
+            // logo: 'link'
+        },
+    });
+
+    let response = {
+        body: {
+            name: user.firstname,
+            intro: `<p style="font-weight:400; color:gray">Wellcome to BarberQueue! Your OTP for verification is: </p> <center><b style="font-weight:600; font-size:1.5rem; text-align:center; padding:20px">${otp}</b></center>`,
+            // otpPlaceholder: otp,
+            outro: "Need help, or have questions? Just reply to this email, we'd love to help.",
+        },
+    };
+
+    // const emailHTML = emailBody.replace('Wellcome to BarberQueue! Your OTP for verification is:', `Your OTP for verification is: <b>${otp}</b>`);
+
+    let mail = mailgenerator.generate(response);
+
+    let message = {
+        from: process.env.EMAIL,
+        to: email,
+        subject: "OTP verification",
+        html: mail,
+    };
+
+    transporter.sendMail(message).then(() => {
+        return res
+            .status(200)
+            .json(ApiResponse(200, {}, `OTP sent successfully on ${email}`));
+    });
+});
+
+const verifyOtpAndLogin = asyncHandler(async (req, res) => {
+    const { email, otp } = req.body;
+
+    const otpData = await Otp.findOne({
+        email,
+        otp,
+    });
+
+    if (!otpData) {
+        throw createApiError(400, "you entered wrong OTP");
+    }
+
+    console.log(otpData);
+
+    const isOtpExpire = otpValidation(otpData?.otpExpiration);
+
+    console.log(isOtpExpire);
+
+    if (!isOtpExpire) {
+        throw createApiError(400, "OTP has been expired");
+    }
+
+    
+    const loggedInUser = await User.findOne({
+        email,
+    }).select(" -refreshToken");
+
+    // const userWithLoyalty = await User.aggregate([
+    //     {
+    //       $match: { email } // Optional: Match condition to filter users
+    //     },
+    //     {
+    //       $lookup: {
+    //         from: 'loyalties', // Name of the collection to join with
+    //         localField: '_id', // Field in the "users" collection
+    //         foreignField: 'user', // Field in the "loyalties" collection
+    //         as: 'loyaltyData' // Name for the field to store the joined documents
+    //       }
+    //     },
+    //     {
+    //       $project: {
+    //         firstname: 1,
+    //         username: 1,
+    //         profilePicture: 1,
+    //         role: 1, 
+    //         email: 1,
+    //         loyaltyData: 1 // Optional: Include only required fields from the joined documents
+    //       }
+    //     }
+    //   ]);
+
+    if (!loggedInUser) {
+        throw createApiError(400, "An error occured while fetching user");
+    }
+
+    // console.log("loyalty user: ",userWithLoyalty);
+
+    // await loggedInUser.populate("loyaltyPoints").execPopulate();
+    
+    const { accessToken, refreshToken } = await generateAccessandRefreshToken(
+        loggedInUser?._id
+    );
+    return res
+    // .cookie("accessToken", accessToken, options)
+    // .cookie("refreshToken", refreshToken, options)
+    .json(
+        ApiResponse(
+            200,
+            {
+                user: loggedInUser,
+                accessToken,
+                refreshToken,
+            },
+            "User logged In Successfully"
+        )
+    );
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
@@ -168,6 +268,14 @@ const logoutUser = asyncHandler(async (req, res) => {
             new: true,
         }
     );
+    return res
+    .json(
+        ApiResponse(
+            200,
+            {},
+            "User logged out Successfully"
+        )
+    )
 });
 
 const renewAccessToken = asyncHandler(async (req, res) => {
@@ -215,110 +323,71 @@ const renewAccessToken = asyncHandler(async (req, res) => {
     }
 });
 
-const changeCurrentPassword = asyncHandler(async (req, res) => {
-    const { oldPassword, newPassword } = req.body;
-
-    const user = await User.findById(req.user?._id);
-
-    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
-
-    if (!isPasswordCorrect) {
-        throw createApiError(400, "Invalid Old Password");
-    }
-
-    user.password = newPassword;
-    await user.save({ validateBeforeSave: false });
-
-    return res
-        .status(200)
-        .json(ApiResponse(200, {}, "Password changed successfully"));
-});
-
 const getCurrentUser = asyncHandler(async (req, res) => {
-
-        console.log(req.user);
+    console.log(req.user);
     return res
         .status(200)
         .json(ApiResponse(200, req.user, "Current user fetched successfully"));
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
-    const { fullname, email } = req.body;
+    const { firstname, email } = req.body;
 
-    if (!(fullname || email)) {
+    if (!(firstname || email)) {
         throw createApiError(400, "All fields are required");
+    }
+
+    // console.log(req.user?.fitname, firstname);
+    if (req.user?.firstname === firstname) {
+        throw createApiError(400, "Provided firstname is same as previous")
+    }
+
+    if (req.user?.email === email) {
+        throw createApiError(400, "Provided email is same as previous")
     }
 
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
-                fullname,
+                firstname,
                 email,
             },
         },
         { new: true }
-    ).select("-password");
+    )
 
     return res
         .status(200)
         .json(ApiResponse(200, user, "Account details updated successfully"));
 });
 
-const updateUserAvatar = asyncHandler(async (req, res) => {
-    const avatarLocalPath = req.file?.path;
+const updateUserProfilePicture = asyncHandler(async (req, res) => {
+    const profilePictureLocalPath = req.file?.path;
 
-    if (!avatarLocalPath) {
-        throw createApiError(400, "avatar is required");
+    if (!profilePictureLocalPath) {
+        throw createApiError(400, "Profile picture is required");
     }
 
-    const avatar = await uploadOnCloudinary(avatarLocalPath);
+    const profilePicture = await uploadOnCloudinary(profilePictureLocalPath);
 
-    if (!avatar.url) {
-        throw createApiError(500, "Error while updating an avatar");
-    }
-
-    const user = await User.findByIdAndUpdate(
-        req.user?._id,
-        {
-            $set: {
-                avatar: avatar.url,
-            },
-        },
-        { new: true }
-    ).select("-password");
-
-    return res
-        .status(200)
-        .json(ApiResponse(200, user, "Avatar updated successfully"));
-});
-
-const updateUserCoverImage = asyncHandler(async (req, res) => {
-    const coverImageLocalPath = req.file?.path;
-
-    if (!coverImageLocalPath) {
-        throw createApiError(400, "Cover Image is required");
-    }
-
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
-
-    if (!coverImage.url) {
-        throw createApiError(500, "Error while updating an cover image");
+    if (!profilePicture.url) {
+        throw createApiError(500, "Error while updating an profile picture");
     }
 
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
-                coverImage: coverImage.url,
+                profilePicture: profilePicture.url,
             },
         },
         { new: true }
-    ).select("-password");
+    )
 
     return res
         .status(200)
-        .json(ApiResponse(200, user, "CoverImage updated successfully"));
+        .json(ApiResponse(200, user, "Profile picture updated successfully"));
 });
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
@@ -397,72 +466,70 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 const getWatchHistory = asyncHandler(async (req, res) => {
     const user = await User.aggregate([
         {
-                $match: {
-                        _id: new mongoose.Types.ObjectId(req.user._id)
-                }
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id),
+            },
         },
         {
-                $lookup: {
-                        from: 'videos',
-                        localField: 'watchHistory',
-                        foreignField: '_id',
-                        as: 'watchHistory',
-                        pipeline: [
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [
                                 {
-                                        $lookup: {
-                                                from: "users",
-                                                localField: 'owner',
-                                                foreignField: '_id',
-                                                as: 'owner',
-                                                pipeline: [
-                                                        {
-                                                                $project: {
-                                                                        fullname: 1,
-                                                                        username: 1,
-                                                                        avatar: 1
-                                                                }
-                                                        }
-                                                ]
-                                                
-                                        }
+                                    $project: {
+                                        fullname: 1,
+                                        username: 1,
+                                        avatar: 1,
+                                    },
                                 },
-                                {
-                                        $addFields: {
-                                                owner: {
-                                                        $first: "$owner"
-                                                }
-                                        }
-                                }
-                        ]
-                }
-        }
-    ])
+                            ],
+                        },
+                    },
+                    {
+                        $addFields: {
+                            owner: {
+                                $first: "$owner",
+                            },
+                        },
+                    },
+                ],
+            },
+        },
+    ]);
 
-    if(!user?.length) {
-        throw createApiError(400, "there is no watch history")
+    if (!user?.length) {
+        throw createApiError(400, "there is no watch history");
     }
 
     return res
-    .status(200)
-    .json(
-        new ApiResponse(
+        .status(200)
+        .json(
+            new ApiResponse(
                 200,
                 user[0].watchHistory,
                 "WatchHistory fetched successfully"
-        )
-    )
+            )
+        );
 });
 
 export {
     registerUser,
-    loginUser,
+    generateOtp,
+    verifyOtpAndLogin,
     logoutUser,
     renewAccessToken,
-    changeCurrentPassword,
     getCurrentUser,
     updateAccountDetails,
-    updateUserAvatar,
-    updateUserCoverImage,
+    updateUserProfilePicture,
     getUserChannelProfile,
-    getWatchHistory
+    getWatchHistory,
 };
