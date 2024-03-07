@@ -206,6 +206,32 @@ const bookAppointment = asyncHandler(async (req, res) => {
     )
 });
 
+const getUpcomingAppointments = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+
+    // Find upcoming appointments where the date is greater than or equal to the current date
+    const upcomingAppointments = await Appointment.find({
+        user: userId,
+        status: "booked",
+    }).sort({ date: 1 });
+
+    return res.status(200).json(ApiResponse(200, upcomingAppointments, "Upcoming appointments fetched successfully"));
+});
+
+const getAppointmentHistory = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+
+    // Find appointment history where the date is less than the current date
+    const appointmentHistory = await Appointment.find({
+        user: userId,
+        status: "confirmed",
+    }).sort({ date: -1 });
+
+    return res.status(200).json(ApiResponse(200, appointmentHistory, "Appointment history fetched successfully"));
+});
+
 export {
-    bookAppointment
+    bookAppointment,
+    getUpcomingAppointments,
+    getAppointmentHistory
 }

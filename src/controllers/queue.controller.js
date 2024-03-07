@@ -101,6 +101,30 @@ const deleteFromQueue = asyncHandler(async(req, res) => {
         throw createApiError(400, "Id is required")
     }
 
+    const appointmentFromQueue = await Queue.findById(id)
+
+    console.log("appointmentFromQueue:" , appointmentFromQueue)
+
+    const appointmentId = appointmentFromQueue?.appointment
+
+    console.log("appointmentId: ", appointmentId)
+
+    const confirmedAppointment = await Appointment.findByIdAndUpdate(
+        appointmentId,
+        {
+            $set: {
+                status: "confirmed"
+            }
+        },
+        {
+            new:true
+        }
+    )
+
+    if(!confirmedAppointment){
+        throw createApiError(500, "An error occured while updating appointment")
+    }
+
     const deletedAppointmentFromQueue = await Queue.deleteOne({_id: id});
 
     if(!deletedAppointmentFromQueue){
