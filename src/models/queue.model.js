@@ -15,16 +15,10 @@ const queueSchema = new Schema(
             index: true,
         },
         tokenNumber: {
-            type: Number,
+            type: String,
             required: true,
             unique: true,
-        },
-        appointmentExpiration: {
-            type: Date,
-            default: Date.now,
-            get:(appointmentExpiration) => appointmentExpiration.getTime(),
-            set:(appointmentExpiration) => new Date(appointmentExpiration)
-          }
+        }
     },
     { timestamps: true }
 );

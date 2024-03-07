@@ -71,4 +71,22 @@ const updateShopTime = asyncHandler(async (req, res) => {
         );
 });
 
-export { setShopTime, updateShopTime };
+const getShopTime = asyncHandler(async(req, res) => {
+        const shopTime = await ShopTime.find()
+
+        if(!shopTime){
+                throw createApiError(500, "An error occured while fetching shop time")
+        }
+
+        return res
+        .status(200)
+        .json(
+                ApiResponse(
+                        200,
+                        shopTime,
+                        "Shop time fetched successfully"
+                )
+        )
+})
+
+export { setShopTime, updateShopTime, getShopTime};
