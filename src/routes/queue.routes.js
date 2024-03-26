@@ -10,6 +10,6 @@ const router = Router();
 
 router.route("/add-to-queue").post(verifyJWT, addToQueue);
 router.route("/delete-from-queue").delete(verifyJWT, deleteFromQueue);
-router.route("/get-queue").get(getQueue);
+router.route("/get-queue").post(getQueue);
 
 export default router;

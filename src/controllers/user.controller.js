@@ -521,6 +521,26 @@ const getWatchHistory = asyncHandler(async (req, res) => {
         );
 });
 
+const getOwnerDtails = asyncHandler(async(req,res) => {
+    const owner = await User.findOne({
+        role:'admin'
+    }).select("-email -_id -role -username -refreshToken -loyaltyPoints")
+
+    if(!owner){
+        throw createApiError('500', "An error occured while fetching owner details")
+    }
+
+    return res
+    .status(200)
+    .json(
+        ApiResponse(
+            200,
+            owner,
+            "Owner details fetched successfully"
+        )
+    )
+})
+
 export {
     registerUser,
     generateOtp,
@@ -532,4 +552,5 @@ export {
     updateUserProfilePicture,
     getUserChannelProfile,
     getWatchHistory,
+    getOwnerDtails
 };

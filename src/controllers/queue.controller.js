@@ -4,16 +4,22 @@ import { createApiError } from "../utils/apiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Artist } from '../models/artist.model.js'
 import {ApiResponse} from "../utils/ApiResponse.js"
+import mongoose from "mongoose";
 
 const generateToken = async (appointment) => {
     const cDate = new Date();
 
     console.log("appointment: ", appointment)
-    const { date, artistId } = appointment;
+    const { date, artist } = appointment;
 
-    console.log("date: ", date, "artistId: ", artistId)
+    console.log("date: ", date, "artistId: ", artist)
 
     const [, , day] = date.split("-");
+
+    const artistId = artist[0]._id.toString()
+    console.log("artistId: ", artistId)
+
+    const lastTwoDigits = artistId.slice(-2);
 
     const queueCount = await Appointment.aggregate([
         {
@@ -34,7 +40,7 @@ const generateToken = async (appointment) => {
 
      console.log("number: ", number)
 
-     const token = `BQ-${day}${number}`
+     const token = `BQ-${lastTwoDigits}${day}${number}`
 
      console.log("token: ", token)
 
@@ -43,6 +49,8 @@ const generateToken = async (appointment) => {
 
 const addToQueue = asyncHandler(async (req, res) => {
     const { id } = req.body;
+
+    console.log("id:", id)
 
     const updateAppointment = await Appointment.findByIdAndUpdate(
         id,
@@ -68,7 +76,7 @@ const addToQueue = asyncHandler(async (req, res) => {
 
     const queueToken = await generateToken(appointment);
 
-    const artist = await Artist.findById(appointment?.artistId)
+    const artist = await Artist.findById(appointment?.artist[0]._id.toString())
 
     const appointmentInQueue = await Queue.create({
         artist,
@@ -143,21 +151,69 @@ const deleteFromQueue = asyncHandler(async(req, res) => {
 })
 
 const getQueue = asyncHandler(async(req, res) => {
-    const queue = await Queue.find()
+    const { date, artistIds } = req.body;
 
-    if(!queue){
-        throw createApiError(500, "An error occured while fetching queue")
+    console.log("date: ", date, "artistIds: ", artistIds);
+
+    if (!date || !artistIds || artistIds.length === 0) {
+        throw createApiError(400, "Date and artistIds are required");
     }
 
-    return res
-    .status(200)
-    .json(
+    const queuesByArtist = {};
+
+    // Iterate over artistIds
+    for (const artistId of artistIds) {
+        const queues = await Queue.aggregate([
+            {
+                $match: {
+                    "artist": new mongoose.Types.ObjectId(artistId)
+                }
+            },
+            {
+                $lookup: {
+                    from: "appointments",
+                    localField: "appointment",
+                    foreignField: "_id",
+                    as: "appointment"
+                }
+            },
+            {
+                $unwind: "$appointment"
+            },
+            {
+                $match: {
+                    "appointment.date": date
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    artist: 1,
+                    tokenNumber: 1,
+                    startingTime: "$appointment.startTime",
+                    endingTime: "$appointment.endTime"
+                }
+            }
+        ]);
+
+        if (queues && queues.length > 0) {
+            queuesByArtist[artistId] = queues;
+        }
+    }
+
+    console.log("queuesByArtist: ", queuesByArtist);
+
+    return res.status(200).json(
         ApiResponse(
             200,
-            queue,
+            queuesByArtist,
             "Queue fetched successfully"
         )
-    )
-})
+    );
+});
+
+
+
+
 
 export { addToQueue, deleteFromQueue, getQueue};

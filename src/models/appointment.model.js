@@ -15,6 +15,13 @@ const serviceSchema = new Schema({
     },
 });
 
+const artistSchema = new Schema({
+    artistName: {
+        type: String,
+        required: true,
+    },
+});
+
 const appointmentSchema = new Schema(
     {
         user: {
@@ -22,11 +29,12 @@ const appointmentSchema = new Schema(
             ref: "User",
             required: true,
         },
-        artistId: {
+        artist: [artistSchema],
+        services: [serviceSchema],
+        approximatTime: {
             type: String,
             required: true,
         },
-        services: [serviceSchema],
         date: {
             type: String,
             required: true,
@@ -69,13 +77,15 @@ export const Appointment = mongoose.model("Appointment", appointmentSchema);
 
 const deletePendingAppointments = async () => {
     try {
-      // Delete appointments with status "pending"
-      const result = await Appointment.deleteMany({ status: "pending" });
-  
-      console.log(`${result.deletedCount} pending appointments deleted successfully.`);
-    } catch (error) {
-      console.error("Error deleting pending appointments:", error);
-    }
-  };
+        // Delete appointments with status "pending"
+        const result = await Appointment.deleteMany({ status: "pending" });
 
-  setInterval(deletePendingAppointments, 900000);
+        console.log(
+            `${result.deletedCount} pending appointments deleted successfully.`
+        );
+    } catch (error) {
+        console.error("Error deleting pending appointments:", error);
+    }
+};
+
+setInterval(deletePendingAppointments, 900000);

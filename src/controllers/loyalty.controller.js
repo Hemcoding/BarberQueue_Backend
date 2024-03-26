@@ -86,6 +86,8 @@ const redeemPoints = asyncHandler(async(req, res) => {
 const getLoyaltyPoints = asyncHandler(async(req, res) => {
         const loyalty = await Loyalty.findOne({user: req.user?._id})
 
+        console.log("you call me")
+
         if(!loyalty){
                 throw createApiError(500, "An error occured while fetching loyalty")
         }

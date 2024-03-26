@@ -10,6 +10,7 @@ import { ShopTime } from "../models/shoptime.model.js";
 import { Appointment } from "../models/appointment.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
+import { Artist } from "../models/artist.model.js";
 
 dayjs.extend(utcToLocal);
 dayjs.extend(customParseFormat);
@@ -18,16 +19,12 @@ const bookAppointment = asyncHandler(async (req, res) => {
     
     const { date, services, paymentType, artistId } = req.body;
 
+    console.log("date: ", date, "service: ",services,"paymentType: ",paymentType, "artistId: ", artistId)
+
     if (!date && !services && !paymentType && !artistId) {
         throw createApiError(400, "All fields are required");
     }
 
-    // console.log(services)
-
-    // const services = await fetchServicesByIds(serviceIds);
-
-    console.log( "services:", services
-    )
 
     let isWalkInCustomer,
         startTime,
@@ -93,12 +90,17 @@ const bookAppointment = asyncHandler(async (req, res) => {
         },
         // Unwind the appointment array
         { $unwind: "$appointment" },
+        {
+            $match: {
+                "appointment.date": date
+            }
+        },
         // Sort appointments by creation date in descending order
         { $sort: { "appointment.createdAt": -1 } },
         // Limit the result to 1 document (last appointment)
         { $limit: 1 },
     ]);
-
+    
     // Extract the last appointment from the result
     const lastAppointmentData = lastAppointment[0]?.appointment;
 
@@ -127,7 +129,7 @@ const bookAppointment = asyncHandler(async (req, res) => {
     const { totalDuration, totalPrice } = services.reduce(
         (acc, service) => {
             // Accumulate duration
-            acc.totalDuration += service.duration;
+            acc.totalDuration += Number(service.duration);
 
             // Accumulate price
             acc.totalPrice += service.price;
@@ -171,11 +173,21 @@ const bookAppointment = asyncHandler(async (req, res) => {
     const localStartTime = dayjs(startTime).format("hh:mm:ss A")
     const localEndTime = dayjs(endTime).format("hh:mm:ss A")
 
+    // const aTime = startTime - currentTime
+    // const approximatWaitingTime = dayjs(aTime).format("hh:mm")
+
+    const artist = await Artist.findById(artistId)
+
+    if(!artist){
+        throw createApiError(500, 'artist is not found')
+    } 
+
     const appointment = await Appointment.create({
         user,
-        artistId,
+        artist,
         services,
         date,
+        approximatTime : totalDuration,
         startTime: localStartTime,
         endTime: localEndTime,
         status: "pending",
