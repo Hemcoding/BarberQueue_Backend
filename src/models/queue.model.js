@@ -18,6 +18,10 @@ const queueSchema = new Schema(
             type: String,
             required: true,
             unique: true,
+        },
+        amountPaid: {
+            type: Number,
+            required: true
         }
     },
     { timestamps: true }

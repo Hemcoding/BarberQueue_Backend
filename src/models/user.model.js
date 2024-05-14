@@ -2,9 +2,6 @@ import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
-// const mongoose = require('mongoose');
-
-// Define the User schema
 const userSchema = new mongoose.Schema(
     {
         firstname: {
@@ -25,6 +22,11 @@ const userSchema = new mongoose.Schema(
             unique: true,
             lowercase: true,
             trim: true,
+        },
+        mobile: {
+            type: String,
+            required: true,
+            unique: true
         },
         profilePicture: {
             type: String, // cloudinary url

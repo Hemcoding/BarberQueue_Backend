@@ -3,7 +3,10 @@ import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { createApiError } from "../utils/apiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+    deleteFromCloudinary,
+    uploadOnCloudinary,
+} from "../utils/cloudinary.js";
 
 const createStaff = asyncHandler(async (req, res) => {
     const { name, specialistIn } = req.body;
@@ -12,7 +15,7 @@ const createStaff = asyncHandler(async (req, res) => {
         throw createApiError(400, "All fields are required");
     }
 
-    const existedStaff = await User.findOne({name});
+    const existedStaff = await User.findOne({ name });
 
     if (existedStaff) {
         throw createApiError(409, "Staff member already exist");
@@ -44,11 +47,17 @@ const createStaff = asyncHandler(async (req, res) => {
         );
     }
 
-    const createdStaffMember = await Staff.findById(staffMember?._id)
+    const createdStaffMember = await Staff.findById(staffMember?._id);
 
     return res
         .status(200)
-        .json(ApiResponse(200, createdStaffMember, "Staff member created successfully"));
+        .json(
+            ApiResponse(
+                200,
+                createdStaffMember,
+                "Staff member created successfully"
+            )
+        );
 });
 
 const deleteStaff = asyncHandler(async (req, res) => {
@@ -73,44 +82,48 @@ const deleteStaff = asyncHandler(async (req, res) => {
 });
 
 const updateStaff = asyncHandler(async (req, res) => {
-    const { id, specialistIn} = req.body;
+    const { id, specialistIn } = req.body;
 
-    console.log(req.file)
+    console.log("specialistIn: ", specialistIn);
 
-    let newStaffImage, staffMember
+    let newStaffImage, staffMember;
 
-    if(req.file){
+    if (req.file) {
+        const staffImageLocalPath = req.file?.path;
 
-    const staffImageLocalPath = req.file?.path;
+        if (!staffImageLocalPath) {
+            throw createApiError(400, "Staff Image is required");
+        }
 
-    if (!staffImageLocalPath) {
-        throw createApiError(400, "Staff Image is required");
-    }
+        newStaffImage = await uploadOnCloudinary(staffImageLocalPath);
+        console.log("new: ", newStaffImage);
 
-    newStaffImage = await uploadOnCloudinary(staffImageLocalPath);
-    console.log(newStaffImage)
+        if (!newStaffImage) {
+            throw createApiError(
+                500,
+                "Server error while uploading staff image"
+            );
+        }
 
-    if (!newStaffImage) {
-        throw createApiError(500, "Server error while uploading staff image");
-    }
+        if (newStaffImage) {
+            const oldStaffMember = await Staff.findById(id);
+            console.log(oldStaffMember);
 
-    if(newStaffImage){
-        const oldStaffMember = await Staff.findById(id)
-
-        const imageURL = oldStaffMember.publicId
-        const response = await deleteFromCloudinary(imageURL)
-        console.log(response);
-    }
-    staffMember = await Staff.findByIdAndUpdate(
-        id,
-        {
-            $set: {
-                staffImage: newStaffImage.url,
-                publicId: newStaffImage.public_id
+            const imageURL = oldStaffMember.publicId;
+            const response = await deleteFromCloudinary(imageURL);
+            console.log(response);
+        }
+        staffMember = await Staff.findByIdAndUpdate(
+            id,
+            {
+                $set: {
+                    staffImage: newStaffImage.url,
+                    publicId: newStaffImage.public_id,
+                    // specialistIn,
+                },
             },
-        },
-        { new: true }
-    );
+            { new: true }
+        );
     }
     staffMember = await Staff.findByIdAndUpdate(
         id,
@@ -124,25 +137,21 @@ const updateStaff = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(ApiResponse(200, staffMember, "Staff details updated successfully"));
+        .json(
+            ApiResponse(200, staffMember, "Staff details updated successfully")
+        );
 });
 
-const getStaff = asyncHandler(async(req, res) => {
-        const staff = await Staff.find()
+const getStaff = asyncHandler(async (req, res) => {
+    const staff = await Staff.find();
 
-        if(!staff){
-                throw createApiError(500, "An error occured while fetching staff")
-        }
+    if (!staff) {
+        throw createApiError(500, "An error occured while fetching staff");
+    }
 
-        return res
+    return res
         .status(200)
-        .json(
-                ApiResponse(
-                        200,
-                        staff,
-                        "Staff fetched successfully"
-                )
-        )
-})
+        .json(ApiResponse(200, staff, "Staff fetched successfully"));
+});
 
 export { createStaff, deleteStaff, updateStaff, getStaff };

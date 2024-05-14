@@ -73,7 +73,7 @@ const updateService =asyncHandler(async(req,res)=>{
 
 const deleteService = asyncHandler(async(req,res) => {
         const {id} = req.body
-        console.log(id);
+        console.log("serviceid: ",id);
 
         const service = await Service.findById(id)
 

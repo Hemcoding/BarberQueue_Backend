@@ -11,6 +11,7 @@ import {
     updateUserProfilePicture,
     verifyOtpAndLogin,
     getOwnerDtails,
+    checkUserLoggedIn,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -42,4 +43,5 @@ router
 router.route("/channel/:username").get(verifyJWT, getUserChannelProfile);
 router.route("/watchHistory").get(verifyJWT, getWatchHistory);
 router.route("/ownerDetails").get(verifyJWT, getOwnerDtails);
+router.route("/check-user-loggedIn").post(verifyJWT, checkUserLoggedIn);
 export default router;

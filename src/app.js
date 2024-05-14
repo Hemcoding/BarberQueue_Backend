@@ -10,6 +10,7 @@ import QueueRoute from "./routes/queue.routes.js";
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import dashboard from "./routes/dashboard.routes.js";
 
 const app = express();
 
@@ -34,5 +35,6 @@ app.use("/api/v1/shopTime", ShopTimeRoute);
 app.use("/api/v1/artist", ArtistRoute);
 app.use("/api/v1/appointment", AppointmentRoute);
 app.use("/api/v1/queue", QueueRoute);
+app.use("/api/v1/dashboard", dashboard);
 
 export { app };

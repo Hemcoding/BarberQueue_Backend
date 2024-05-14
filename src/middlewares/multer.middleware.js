@@ -8,5 +8,5 @@ const storage = multer.diskStorage({
         cb(null, file.originalname);
     },
 });
-
+console.log(storage)
 export const upload = multer({ storage });

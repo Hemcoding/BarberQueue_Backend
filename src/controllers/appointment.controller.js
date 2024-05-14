@@ -2,7 +2,6 @@ import { Queue } from "../models/queue.model.js";
 import { User } from "../models/user.model.js";
 import { createApiError } from "../utils/apiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-
 import dayjs from "dayjs";
 import utcToLocal from "dayjs/plugin/utc.js";
 import customParseFormat from "dayjs/plugin/customParseFormat.js";
@@ -16,15 +15,28 @@ dayjs.extend(utcToLocal);
 dayjs.extend(customParseFormat);
 
 const bookAppointment = asyncHandler(async (req, res) => {
-    
-    const { date, services, paymentType, artistId } = req.body;
+    const { date, services, paymentType, artistId, redeemPoints } = req.body;
 
-    console.log("date: ", date, "service: ",services,"paymentType: ",paymentType, "artistId: ", artistId)
+    let pointsToRupeesRatio = 5;
+    let redeemAmountInRupees = redeemPoints / pointsToRupeesRatio;
+    redeemAmountInRupees.toFixed(2)
+
+    console.log(
+        "date: ",
+        date,
+        "service: ",
+        services,
+        "paymentType: ",
+        paymentType,
+        "artistId: ",
+        artistId,
+        "points: ",
+        redeemAmountInRupees
+    );
 
     if (!date && !services && !paymentType && !artistId) {
         throw createApiError(400, "All fields are required");
     }
-
 
     let isWalkInCustomer,
         startTime,
@@ -34,9 +46,10 @@ const bookAppointment = asyncHandler(async (req, res) => {
 
     const shopTime = await ShopTime.find();
 
-    console.log(shopTime)
+    console.log(shopTime);
 
-    let { openingTime, closingTime, lunchBreakStart, lunchBreakEnd } = shopTime[0];
+    let { openingTime, closingTime, lunchBreakStart, lunchBreakEnd } =
+        shopTime[0];
 
     const localOpeningDateTime = date + " " + openingTime;
     const localClosingDateTime = date + " " + closingTime;
@@ -60,15 +73,15 @@ const bookAppointment = asyncHandler(async (req, res) => {
         "YYYY-MM-DD hh:mm A"
     ).valueOf();
 
-    console.log(localLunchBreakEnd, localBreakEndDateTime)
+    console.log(localLunchBreakEnd, localBreakEndDateTime);
 
     const user = await User.findById(req.user?._id);
 
-    console.log("user: ", user)
+    console.log("user: ", user);
 
     const { role } = user;
 
-    console.log("role: ",role)
+    console.log("role: ", role);
 
     if (role === "admin") {
         isWalkInCustomer = true;
@@ -77,46 +90,38 @@ const bookAppointment = asyncHandler(async (req, res) => {
     isWalkInCustomer = false;
 
     const lastAppointment = await Queue.aggregate([
-        // Match queue entries for the specified artist
         { $match: { artist: new mongoose.Types.ObjectId(artistId) } },
-        // Lookup to join with the Appointment collection
         {
             $lookup: {
-                from: "appointments", // Collection name of Appointment model
+                from: "appointments",
                 localField: "appointment",
                 foreignField: "_id",
                 as: "appointment",
             },
         },
-        // Unwind the appointment array
         { $unwind: "$appointment" },
         {
             $match: {
-                "appointment.date": date
-            }
+                "appointment.date": date,
+            },
         },
-        // Sort appointments by creation date in descending order
         { $sort: { "appointment.createdAt": -1 } },
-        // Limit the result to 1 document (last appointment)
         { $limit: 1 },
     ]);
-    
-    // Extract the last appointment from the result
+
     const lastAppointmentData = lastAppointment[0]?.appointment;
 
-    console.log("lastAppointment: ", lastAppointment)
-    console.log("lastAppointmentData: ", lastAppointmentData)
+    console.log("lastAppointment: ", lastAppointment);
+    console.log("lastAppointmentData: ", lastAppointmentData);
 
     const currentDate = new Date();
 
-    //const currentTime = currentDate.getHours() + ":" + currentDate.getMinutes();
     currentTime = currentDate.getTime();
     if (lastAppointment.length === 0) {
- 
-        // localCurrentTime = dayjs(currentTime).utc().local();
         previousAppointmentEndTime = localOpeningTime;
     } else {
-        let previousAppointmentEndDateAndTime = date + " " + lastAppointmentData?.endTime
+        let previousAppointmentEndDateAndTime =
+            date + " " + lastAppointmentData?.endTime;
         let localPreviousAppointmentEndTime = dayjs(
             previousAppointmentEndDateAndTime,
             "YYYY-MM-DD hh:mm A"
@@ -124,9 +129,9 @@ const bookAppointment = asyncHandler(async (req, res) => {
         previousAppointmentEndTime = localPreviousAppointmentEndTime;
     }
 
-    console.log("previousAppointmentEndTime: ", previousAppointmentEndTime)
+    console.log("previousAppointmentEndTime: ", previousAppointmentEndTime);
 
-    const { totalDuration, totalPrice } = services.reduce(
+    let { totalDuration, totalPrice } = services.reduce(
         (acc, service) => {
             // Accumulate duration
             acc.totalDuration += Number(service.duration);
@@ -139,8 +144,8 @@ const bookAppointment = asyncHandler(async (req, res) => {
         { totalDuration: 0, totalPrice: 0 }
     );
 
-    console.log("totalDuration: ", totalDuration)
-    console.log("totalPrice: ", totalPrice)
+    console.log("totalDuration: ", totalDuration);
+    console.log("totalPrice: ", totalPrice);
 
     if (currentTime === previousAppointmentEndTime) {
         startTime = currentTime;
@@ -150,72 +155,84 @@ const bookAppointment = asyncHandler(async (req, res) => {
         startTime = previousAppointmentEndTime;
     }
 
-    console.log("startTime: ", startTime)
+    console.log("startTime: ", startTime);
 
     endTime = startTime + totalDuration * 60000;
 
-    console.log("endTime: ", endTime)
+    console.log("endTime: ", endTime);
 
     if (endTime > localLunchBreakStart && endTime < localLunchBreakEnd) {
         startTime = localLunchBreakEnd;
     }
 
-    console.log("startTime: ", startTime)
+    console.log("startTime: ", startTime);
 
     endTime = startTime + totalDuration * 60000;
 
-    console.log("endTime: " ,endTime);
+    console.log("endTime: ", endTime);
 
-    if(endTime > localClosingTime){
-        throw createApiError(400, "Sorry, the selected appointment time exceeds the shop's closing time.However, we'd be happy to schedule your appointment for tomorrow")
+    if (endTime > localClosingTime) {
+        return res
+            .status(400)
+            .json(
+                ApiResponse(
+                    400,
+                    {},
+                    "Sorry, the selected appointment time exceeds the shop's closing time.However, we'd be happy to schedule your appointment for tomorrow"
+                )
+            );
     }
 
-    const localStartTime = dayjs(startTime).format("hh:mm:ss A")
-    const localEndTime = dayjs(endTime).format("hh:mm:ss A")
+    const localStartTime = dayjs(startTime).format("hh:mm:ss A");
+    const localEndTime = dayjs(endTime).format("hh:mm:ss A");
 
-    // const aTime = startTime - currentTime
-    // const approximatWaitingTime = dayjs(aTime).format("hh:mm")
+    const artist = await Artist.findById(artistId);
 
-    const artist = await Artist.findById(artistId)
-
-    if(!artist){
-        throw createApiError(500, 'artist is not found')
-    } 
+    if (!artist) {
+        throw createApiError(500, "artist is not found");
+    }
 
     const appointment = await Appointment.create({
         user,
         artist,
         services,
         date,
-        approximatTime : totalDuration,
+        approximatTime: totalDuration,
         startTime: localStartTime,
         endTime: localEndTime,
         status: "pending",
         isWalkInCustomer,
         paymentType,
         serviceCharges: totalPrice,
-        tax: 5 
+        redeemAmount: redeemAmountInRupees,
+        tax: 5,
     });
 
-    if(!appointment){
-        throw createApiError(500, "An error occured while creating appointment")
+    if (!appointment) {
+        throw createApiError(
+            500,
+            "An error occured while creating appointment"
+        );
     }
 
-    const createdAppointment = await Appointment.findById(appointment?._id)
+    const createdAppointment = await Appointment.findById(appointment?._id);
 
-    if(!createdAppointment){
-        throw createApiError(500, "An error occured while fetching appointment")
+    if (!createdAppointment) {
+        throw createApiError(
+            500,
+            "An error occured while fetching appointment"
+        );
     }
 
     return res
-    .status(200)
-    .json(
-        ApiResponse(
-            200, 
-            createdAppointment,
-            "Appointment created successfully"
-        )
-    )
+        .status(200)
+        .json(
+            ApiResponse(
+                200,
+                createdAppointment,
+                "Appointment created successfully"
+            )
+        );
 });
 
 const getUpcomingAppointments = asyncHandler(async (req, res) => {
@@ -225,9 +242,17 @@ const getUpcomingAppointments = asyncHandler(async (req, res) => {
     const upcomingAppointments = await Appointment.find({
         user: userId,
         status: "booked",
-    }).sort({ date: 1 });
+    }).sort({ createdAt: -1 });
 
-    return res.status(200).json(ApiResponse(200, upcomingAppointments, "Upcoming appointments fetched successfully"));
+    return res
+        .status(200)
+        .json(
+            ApiResponse(
+                200,
+                upcomingAppointments,
+                "Upcoming appointments fetched successfully"
+            )
+        );
 });
 
 const getAppointmentHistory = asyncHandler(async (req, res) => {
@@ -237,13 +262,47 @@ const getAppointmentHistory = asyncHandler(async (req, res) => {
     const appointmentHistory = await Appointment.find({
         user: userId,
         status: "confirmed",
-    }).sort({ date: -1 });
+    }).sort({ createdAt: -1 });
 
-    return res.status(200).json(ApiResponse(200, appointmentHistory, "Appointment history fetched successfully"));
+    return res
+        .status(200)
+        .json(
+            ApiResponse(
+                200,
+                appointmentHistory,
+                "Appointment history fetched successfully"
+            )
+        );
+});
+
+const getAppointment = asyncHandler(async (req, res) => {
+    const { id } = req.body;
+
+    console.log("appointmentid: ", id);
+
+    if (!id) {
+        throw createApiError(400, "Id is required");
+    }
+
+    const appointment = await Appointment.findById(id);
+
+    if (!appointment) {
+        throw createApiError(
+            500,
+            "An error occured while fetching appointment"
+        );
+    }
+
+    return res
+        .status(200)
+        .json(
+            ApiResponse(200, appointment, "Appointment fetched successfully")
+        );
 });
 
 export {
     bookAppointment,
     getUpcomingAppointments,
-    getAppointmentHistory
-}
+    getAppointmentHistory,
+    getAppointment,
+};

@@ -4,14 +4,14 @@ function createApiError(statusCode, message = "Something went wrong", errors = [
             data: null,
             message: message,
             success: false,
-            errors: errors
+            // errors: errors
         };
     
-        if (stack) {
-            error.stack = stack;
-        } else {
-            Error.captureStackTrace(error, createApiError);
-        }
+        // if (stack) {
+        //     error.stack = stack;
+        // } else {
+        //     Error.captureStackTrace(error, createApiError);
+        // }
     
         return error;
     }

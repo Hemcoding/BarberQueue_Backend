@@ -38,14 +38,14 @@ const generateAccessandRefreshToken = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { firstname, email, username, role, description} = req.body;
+    const { firstname, email, username, role, description, mobile } = req.body;
     //     if (
     //         [fullname, email, username, password].some((field) => field?.trim() === "")
     //     ) {
     //         throw  createApiError(400, "All fields are required")
     //     }
 
-    if (!firstname && !email && !username && !role) {
+    if (!firstname && !email && !username && !role && !mobile) {
         throw createApiError(400, "All field are required");
     }
 
@@ -54,9 +54,20 @@ const registerUser = asyncHandler(async (req, res) => {
     });
 
     if (existedUser) {
-        throw createApiError(409, "User with email or username already exist");
+        return res.status(409).json(
+            // createApiError(409, "User with email or username already exist")
+            {
+                success: false,
+                statuscode: 409,
+                message: "User with eamil and username already exist ",
+            }
+        );
+    }
+    if (!req.files?.profilePicture[0]?.path) {
+        throw createApiError(400, "profile picture is required");
     }
 
+    console.log("url: ", req.files);
     const profilePictureLocalPath = req.files?.profilePicture[0]?.path;
 
     if (!profilePictureLocalPath) {
@@ -66,7 +77,10 @@ const registerUser = asyncHandler(async (req, res) => {
     const profilePicture = await uploadOnCloudinary(profilePictureLocalPath);
 
     if (!profilePicture) {
-        throw createApiError(500, "Server error while uploading profile picture");
+        throw createApiError(
+            500,
+            "Server error while uploading profile picture"
+        );
     }
 
     const user = await User.create({
@@ -75,14 +89,15 @@ const registerUser = asyncHandler(async (req, res) => {
         role,
         email,
         description,
+        mobile,
         username: username.toLowerCase(),
     });
 
-    console.log("user" , user);
+    console.log("user", user);
 
     const createdUser = await User.findById(user._id).select(" -refreshToken");
 
-    console.log("createduser" , createdUser);
+    console.log("createduser", createdUser);
 
     if (!createdUser) {
         throw createApiError(500, "Something went wrong while creating User");
@@ -174,12 +189,16 @@ const generateOtp = asyncHandler(async (req, res) => {
     transporter.sendMail(message).then(() => {
         return res
             .status(200)
-            .json(ApiResponse(200, {}, `OTP sent successfully on ${email}`));
+            .json(
+                ApiResponse(200, { email }, `OTP sent successfully on ${email}`)
+            );
     });
 });
 
 const verifyOtpAndLogin = asyncHandler(async (req, res) => {
     const { email, otp } = req.body;
+
+    console.log("you called me: ", email, otp);
 
     const otpData = await Otp.findOne({
         email,
@@ -200,21 +219,20 @@ const verifyOtpAndLogin = asyncHandler(async (req, res) => {
         throw createApiError(400, "OTP has been expired");
     }
 
-    
     const loggedInUser = await User.findOne({
         email,
     }).select(" -refreshToken");
 
     // const userWithLoyalty = await User.aggregate([
     //     {
-    //       $match: { email } // Optional: Match condition to filter users
+    //       $match: { email } 
     //     },
     //     {
     //       $lookup: {
-    //         from: 'loyalties', // Name of the collection to join with
-    //         localField: '_id', // Field in the "users" collection
-    //         foreignField: 'user', // Field in the "loyalties" collection
-    //         as: 'loyaltyData' // Name for the field to store the joined documents
+    //         from: 'loyalties', 
+    //         localField: '_id', 
+    //         foreignField: 'user', 
+    //         as: 'loyaltyData'
     //       }
     //     },
     //     {
@@ -222,9 +240,9 @@ const verifyOtpAndLogin = asyncHandler(async (req, res) => {
     //         firstname: 1,
     //         username: 1,
     //         profilePicture: 1,
-    //         role: 1, 
+    //         role: 1,
     //         email: 1,
-    //         loyaltyData: 1 // Optional: Include only required fields from the joined documents
+    //         loyaltyData: 1 
     //       }
     //     }
     //   ]);
@@ -236,23 +254,25 @@ const verifyOtpAndLogin = asyncHandler(async (req, res) => {
     // console.log("loyalty user: ",userWithLoyalty);
 
     // await loggedInUser.populate("loyaltyPoints").execPopulate();
-    
+
     const { accessToken, refreshToken } = await generateAccessandRefreshToken(
         loggedInUser?._id
     );
-    return res
-    // .cookie("accessToken", accessToken, options)
-    // .cookie("refreshToken", refreshToken, options)
-    .json(
-        ApiResponse(
-            200,
-            {
-                user: loggedInUser,
-                accessToken,
-                refreshToken,
-            },
-            "User logged In Successfully"
-        )
+    return (
+        res
+            // .cookie("accessToken", accessToken, options)
+            // .cookie("refreshToken", refreshToken, options)
+            .json(
+                ApiResponse(
+                    200,
+                    {
+                        user: loggedInUser,
+                        accessToken,
+                        refreshToken,
+                    },
+                    "User logged In Successfully"
+                )
+            )
     );
 });
 
@@ -261,21 +281,14 @@ const logoutUser = asyncHandler(async (req, res) => {
         req.user._id,
         {
             $set: {
-                refreshToken: undefined,
+                accessToken: null,
             },
         },
         {
             new: true,
         }
     );
-    return res
-    .json(
-        ApiResponse(
-            200,
-            {},
-            "User logged out Successfully"
-        )
-    )
+    return res.json(ApiResponse(200, {}, "User logged out Successfully"));
 });
 
 const renewAccessToken = asyncHandler(async (req, res) => {
@@ -331,20 +344,20 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
-    const { firstname, email } = req.body;
+    const { firstname, email, mobile } = req.body;
 
-    if (!(firstname || email)) {
+    if (!(firstname || email || mobile)) {
         throw createApiError(400, "All fields are required");
     }
 
     // console.log(req.user?.fitname, firstname);
-    if (req.user?.firstname === firstname) {
-        throw createApiError(400, "Provided firstname is same as previous")
-    }
+    // if (req.user?.firstname === firstname) {
+    //     throw createApiError(400, "Provided firstname is same as previous");
+    // }
 
-    if (req.user?.email === email) {
-        throw createApiError(400, "Provided email is same as previous")
-    }
+    // if (req.user?.email === email) {
+    //     throw createApiError(400, "Provided email is same as previous");
+    // }
 
     const user = await User.findByIdAndUpdate(
         req.user?._id,
@@ -355,7 +368,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
             },
         },
         { new: true }
-    )
+    ).select("-refreshToken");
 
     return res
         .status(200)
@@ -383,7 +396,7 @@ const updateUserProfilePicture = asyncHandler(async (req, res) => {
             },
         },
         { new: true }
-    )
+    );
 
     return res
         .status(200)
@@ -521,13 +534,28 @@ const getWatchHistory = asyncHandler(async (req, res) => {
         );
 });
 
-const getOwnerDtails = asyncHandler(async(req,res) => {
+const getOwnerDtails = asyncHandler(async (req, res) => {
     const owner = await User.findOne({
-        role:'admin'
-    }).select("-email -_id -role -username -refreshToken -loyaltyPoints")
+        role: "admin",
+    }).select("-email -_id -role -username -refreshToken -loyaltyPoints");
 
-    if(!owner){
-        throw createApiError('500', "An error occured while fetching owner details")
+    if (!owner) {
+        throw createApiError(
+            "500",
+            "An error occured while fetching owner details"
+        );
+    }
+
+    return res
+        .status(200)
+        .json(ApiResponse(200, owner, "Owner details fetched successfully"));
+});
+
+const checkUserLoggedIn = asyncHandler(async (req, res) => {
+    const user = req.user;
+
+    if (!user?.accessToken) {
+        throw createApiError(400, "user is not logged in")
     }
 
     return res
@@ -535,11 +563,11 @@ const getOwnerDtails = asyncHandler(async(req,res) => {
     .json(
         ApiResponse(
             200,
-            owner,
-            "Owner details fetched successfully"
+            user,
+            "User is logged in"
         )
     )
-})
+});
 
 export {
     registerUser,
@@ -552,5 +580,6 @@ export {
     updateUserProfilePicture,
     getUserChannelProfile,
     getWatchHistory,
-    getOwnerDtails
+    getOwnerDtails,
+    checkUserLoggedIn
 };

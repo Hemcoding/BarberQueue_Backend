@@ -35,6 +35,14 @@ const updateShopTime = asyncHandler(async (req, res) => {
     const { id, openingTime, closingTime, lunchBreakStart, lunchBreakEnd } =
         req.body;
 
+    console.log(
+        "all: ",
+        id,
+        openingTime,
+        closingTime,
+        lunchBreakStart,
+        lunchBreakEnd
+    );
     if (
         !id &&
         !openingTime &&
@@ -71,22 +79,16 @@ const updateShopTime = asyncHandler(async (req, res) => {
         );
 });
 
-const getShopTime = asyncHandler(async(req, res) => {
-        const shopTime = await ShopTime.find()
+const getShopTime = asyncHandler(async (req, res) => {
+    const shopTime = await ShopTime.find();
 
-        if(!shopTime){
-                throw createApiError(500, "An error occured while fetching shop time")
-        }
+    if (!shopTime) {
+        throw createApiError(500, "An error occured while fetching shop time");
+    }
 
-        return res
+    return res
         .status(200)
-        .json(
-                ApiResponse(
-                        200,
-                        shopTime,
-                        "Shop time fetched successfully"
-                )
-        )
-})
+        .json(ApiResponse(200, shopTime, "Shop time fetched successfully"));
+});
 
-export { setShopTime, updateShopTime, getShopTime};
+export { setShopTime, updateShopTime, getShopTime };

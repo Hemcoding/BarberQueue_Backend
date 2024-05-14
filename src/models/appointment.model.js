@@ -69,6 +69,10 @@ const appointmentSchema = new Schema(
             type: Number,
             default: 5,
         },
+        redeemAmount: {
+            type: Number,
+            default: 0
+        }
     },
     { timestamps: true }
 );
@@ -88,4 +92,4 @@ const deletePendingAppointments = async () => {
     }
 };
 
-setInterval(deletePendingAppointments, 900000);
+setInterval(deletePendingAppointments,  86400000);

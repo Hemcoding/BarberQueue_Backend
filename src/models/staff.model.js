@@ -15,7 +15,7 @@ const staffSchema = new Schema(
             required: true,
         },
         specialistIn: {
-            type: [String],
+            type: String,
             required: true,
         },
     },
