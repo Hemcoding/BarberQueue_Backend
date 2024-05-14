@@ -136,7 +136,7 @@ const getWeeklyAppointmentCount = asyncHandler(async (req, res) => {
                 weeklyCounts[dayOfWeek][0] += 1; 
             } else if (appointment.status === "confirmed") {
                 weeklyCounts[dayOfWeek][1] += 1; 
-        });
+        }});
     
         return res.status(200).json(
             ApiResponse(
