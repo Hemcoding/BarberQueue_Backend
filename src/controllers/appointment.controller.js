@@ -19,7 +19,7 @@ const bookAppointment = asyncHandler(async (req, res) => {
 
     let pointsToRupeesRatio = 5;
     let redeemAmountInRupees = redeemPoints / pointsToRupeesRatio;
-    redeemAmountInRupees.toFixed(2)
+    redeemAmountInRupees.toFixed(2);
 
     console.log(
         "date: ",
@@ -133,10 +133,8 @@ const bookAppointment = asyncHandler(async (req, res) => {
 
     let { totalDuration, totalPrice } = services.reduce(
         (acc, service) => {
-            // Accumulate duration
             acc.totalDuration += Number(service.duration);
 
-            // Accumulate price
             acc.totalPrice += service.price;
 
             return acc;
@@ -238,7 +236,6 @@ const bookAppointment = asyncHandler(async (req, res) => {
 const getUpcomingAppointments = asyncHandler(async (req, res) => {
     const userId = req.user._id;
 
-    // Find upcoming appointments where the date is greater than or equal to the current date
     const upcomingAppointments = await Appointment.find({
         user: userId,
         status: "booked",
@@ -258,7 +255,6 @@ const getUpcomingAppointments = asyncHandler(async (req, res) => {
 const getAppointmentHistory = asyncHandler(async (req, res) => {
     const userId = req.user._id;
 
-    // Find appointment history where the date is less than the current date
     const appointmentHistory = await Appointment.find({
         user: userId,
         status: "confirmed",

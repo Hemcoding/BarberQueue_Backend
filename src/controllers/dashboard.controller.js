@@ -133,10 +133,9 @@ const getWeeklyAppointmentCount = asyncHandler(async (req, res) => {
         appointmentsForCurrentWeek.forEach((appointment) => {
             const dayOfWeek = new Date(appointment.date).getDay();
             if (appointment.status === "booked") {
-                weeklyCounts[dayOfWeek][0] += 1; // Increment booked count
+                weeklyCounts[dayOfWeek][0] += 1; 
             } else if (appointment.status === "confirmed") {
-                weeklyCounts[dayOfWeek][1] += 1; // Increment confirmed count
-            }
+                weeklyCounts[dayOfWeek][1] += 1; 
         });
     
         return res.status(200).json(

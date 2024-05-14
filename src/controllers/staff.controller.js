@@ -119,7 +119,6 @@ const updateStaff = asyncHandler(async (req, res) => {
                 $set: {
                     staffImage: newStaffImage.url,
                     publicId: newStaffImage.public_id,
-                    // specialistIn,
                 },
             },
             { new: true }

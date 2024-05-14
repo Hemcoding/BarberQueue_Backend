@@ -55,7 +55,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
     if (existedUser) {
         return res.status(409).json(
-            // createApiError(409, "User with email or username already exist")
             {
                 success: false,
                 statuscode: 409,
@@ -110,7 +109,6 @@ const registerUser = asyncHandler(async (req, res) => {
         balancePoints: 0,
     });
 
-    // Check if loyalty creation was successful
     if (!loyalty) {
         throw createApiError(500, "Failed to create loyalty object");
     }
@@ -174,8 +172,6 @@ const generateOtp = asyncHandler(async (req, res) => {
             outro: "Need help, or have questions? Just reply to this email, we'd love to help.",
         },
     };
-
-    // const emailHTML = emailBody.replace('Wellcome to BarberQueue! Your OTP for verification is:', `Your OTP for verification is: <b>${otp}</b>`);
 
     let mail = mailgenerator.generate(response);
 
@@ -250,10 +246,6 @@ const verifyOtpAndLogin = asyncHandler(async (req, res) => {
     if (!loggedInUser) {
         throw createApiError(400, "An error occured while fetching user");
     }
-
-    // console.log("loyalty user: ",userWithLoyalty);
-
-    // await loggedInUser.populate("loyaltyPoints").execPopulate();
 
     const { accessToken, refreshToken } = await generateAccessandRefreshToken(
         loggedInUser?._id

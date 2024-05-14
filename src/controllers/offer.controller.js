@@ -15,7 +15,6 @@ const createOffer = asyncHandler(async (req, res) => {
         }
     
         const { discountPercentage, startDate, endDate ,linkURL} = req.body;
-        // console.log(discountPercentage, startDate, endDate);
     
         if (!linkURL) {
             throw createApiError(400, "All fields are requred !");
@@ -60,7 +59,6 @@ const updateOffer = asyncHandler(async (req, res) => {
     }
 
     const { id, discountPercentage, startDate, endDate } = req.body;
-//     console.log(discountPercentage, startDate, endDate);
 
     if (!id && !discountPercentage && !startDate && !endDate) {
         throw createApiError(400, "All fields are requred !");

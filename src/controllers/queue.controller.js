@@ -140,7 +140,7 @@ const addToQueue = asyncHandler(async (req, res) => {
     const loyaltyPoint = await Loyalty.findOneAndUpdate(
         { user: req.user?._id },
         {
-            // earnedPoints: earnedPoints - redeemedPoint,
+            
             balancePoints: balancePoints - redeemedPoint,
             redeemedPoints: redeemedPoints + redeemedPoint
         }
@@ -174,7 +174,6 @@ const addToQueue = asyncHandler(async (req, res) => {
         product: {
             name: "BarberQueue",
             link: "https://res.cloudinary.com/dabxtjbhp/image/upload/v1708787352/w6xh3i7tbvstrkzbrszh.jpg ",
-            // logo: 'link'
         },
     });
 
@@ -206,7 +205,6 @@ const addToQueue = asyncHandler(async (req, res) => {
         },
     };
 
-    // const emailHTML = emailBody.replace('Wellcome to BarberQueue! Your OTP for verification is:', `Your OTP for verification is: <b>${otp}</b>`);
 
     let mail = mailgenerator.generate(response);
 
@@ -239,11 +237,6 @@ const deleteFromQueue = asyncHandler(async (req, res) => {
         throw createApiError(400, "Id is required");
     }
 
-    // const appointmentFromQueue = await Queue.findById(id);
-
-    // console.log("appointmentFromQueue:", appointmentFromQueue);
-
-    // const appointmentId = appointmentFromQueue?.appointment;
 
     console.log("appointmentId: ", appointmentId);
 
@@ -293,7 +286,6 @@ const getQueue = asyncHandler(async (req, res) => {
 
     const queuesByArtist = {};
 
-    // Iterate over artistIds
     for (const artistId of artistIds) {
         const queues = await Queue.aggregate([
             {
@@ -312,7 +304,7 @@ const getQueue = asyncHandler(async (req, res) => {
             {
                 $unwind: {
                     path: "$appointment",
-                    preserveNullAndEmptyArrays: true, // Preserve empty arrays
+                    preserveNullAndEmptyArrays: true,
                 },
             },
             {
@@ -322,34 +314,32 @@ const getQueue = asyncHandler(async (req, res) => {
             },
             {
                 $sort: {
-                    // Sort by any field in descending order
-                    // Here, I'm assuming you have a field like 'createdAt' or '_id' for sorting
                     createdAt: -1,
                 },
             },
             {
                 $project: {
                     _id: 1,
-                    appointmentId: "$appointment._id", // Include the appointment ID
+                    appointmentId: "$appointment._id",
                     artist: 1,
                     amountPaid: 1,
                     tokenNumber: {
-                        $ifNull: ["$tokenNumber", null], // Handle cases where tokenNumber is null
+                        $ifNull: ["$tokenNumber", null],
                     },
                     startingTime: {
-                        $ifNull: ["$appointment.startTime", null], // Handle cases where startTime is null
+                        $ifNull: ["$appointment.startTime", null], 
                     },
                     endingTime: {
-                        $ifNull: ["$appointment.endTime", null], // Handle cases where endTime is null
+                        $ifNull: ["$appointment.endTime", null],
                     },
-                    appointmentServiceCharges: "$appointment.serviceCharges", // Debugging: Log appointment serviceCharges
-                    appointmentTax: "$appointment.tax", // Debugging: Log appointment tax
+                    appointmentServiceCharges: "$appointment.serviceCharges",
+                    appointmentTax: "$appointment.tax",
                     payableAmount: {
                         $add: [
                             "$appointment.serviceCharges",
                             "$appointment.tax",
                         ],
-                    }, // Calculate payableAmount as the sum of serviceCharges and tax
+                    },
                     remainingAmount: {
                         $subtract: [
                             {
@@ -360,14 +350,14 @@ const getQueue = asyncHandler(async (req, res) => {
                             },
                             "$amountPaid",
                         ],
-                    }, // Calculate remainingAmount as serviceCharges + tax - amountPaid
+                    }, 
                 },
             },
         ]);
 
-        console.log("Queues:", queues); // Debugging: Log queues to check if data is correctly retrieved
+        console.log("Queues:", queues); 
 
-        queuesByArtist[artistId] = queues || []; // Initialize with empty array if queues is null or undefined
+        queuesByArtist[artistId] = queues || [];
     }
 
     console.log("queuesByArtist: ", queuesByArtist);
