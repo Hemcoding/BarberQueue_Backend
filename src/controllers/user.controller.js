@@ -1,4 +1,4 @@
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { createApiError } from "../utils/apiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
@@ -37,7 +37,7 @@ const generateAccessandRefreshToken = async (userId) => {
     }
 };
 
-const registerUser = asyncHandler(async (req, res) => {
+const registerUser = AsyncHandler(async (req, res) => {
     const { firstname, email, username, role, description, mobile } = req.body;
     //     if (
     //         [fullname, email, username, password].some((field) => field?.trim() === "")
@@ -118,7 +118,7 @@ const registerUser = asyncHandler(async (req, res) => {
         .json(ApiResponse(200, createdUser, "User create successfully"));
 });
 
-const generateOtp = asyncHandler(async (req, res) => {
+const generateOtp = AsyncHandler(async (req, res) => {
     const { email } = req.body;
 
     if (!email) {
@@ -191,7 +191,7 @@ const generateOtp = asyncHandler(async (req, res) => {
     });
 });
 
-const verifyOtpAndLogin = asyncHandler(async (req, res) => {
+const verifyOtpAndLogin = AsyncHandler(async (req, res) => {
     const { email, otp } = req.body;
 
     console.log("you called me: ", email, otp);
@@ -268,7 +268,7 @@ const verifyOtpAndLogin = asyncHandler(async (req, res) => {
     );
 });
 
-const logoutUser = asyncHandler(async (req, res) => {
+const logoutUser = AsyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
         req.user._id,
         {
@@ -283,7 +283,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     return res.json(ApiResponse(200, {}, "User logged out Successfully"));
 });
 
-const renewAccessToken = asyncHandler(async (req, res) => {
+const renewAccessToken = AsyncHandler(async (req, res) => {
     const incomingRefreshToken =
         (await req.cookie.refreshToken) || req.body.refreshToken;
 
@@ -328,14 +328,14 @@ const renewAccessToken = asyncHandler(async (req, res) => {
     }
 });
 
-const getCurrentUser = asyncHandler(async (req, res) => {
+const getCurrentUser = AsyncHandler(async (req, res) => {
     console.log(req.user);
     return res
         .status(200)
         .json(ApiResponse(200, req.user, "Current user fetched successfully"));
 });
 
-const updateAccountDetails = asyncHandler(async (req, res) => {
+const updateAccountDetails = AsyncHandler(async (req, res) => {
     const { firstname, email, mobile } = req.body;
 
     if (!(firstname || email || mobile)) {
@@ -367,7 +367,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
         .json(ApiResponse(200, user, "Account details updated successfully"));
 });
 
-const updateUserProfilePicture = asyncHandler(async (req, res) => {
+const updateUserProfilePicture = AsyncHandler(async (req, res) => {
     const profilePictureLocalPath = req.file?.path;
 
     if (!profilePictureLocalPath) {
@@ -395,7 +395,7 @@ const updateUserProfilePicture = asyncHandler(async (req, res) => {
         .json(ApiResponse(200, user, "Profile picture updated successfully"));
 });
 
-const getUserChannelProfile = asyncHandler(async (req, res) => {
+const getUserChannelProfile = AsyncHandler(async (req, res) => {
     const { username } = req.params;
 
     if (!username) {
@@ -468,7 +468,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         );
 });
 
-const getWatchHistory = asyncHandler(async (req, res) => {
+const getWatchHistory = AsyncHandler(async (req, res) => {
     const user = await User.aggregate([
         {
             $match: {
@@ -526,7 +526,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
         );
 });
 
-const getOwnerDtails = asyncHandler(async (req, res) => {
+const getOwnerDtails = AsyncHandler(async (req, res) => {
     const owner = await User.findOne({
         role: "admin",
     }).select("-email -_id -role -username -refreshToken -loyaltyPoints");
@@ -543,7 +543,7 @@ const getOwnerDtails = asyncHandler(async (req, res) => {
         .json(ApiResponse(200, owner, "Owner details fetched successfully"));
 });
 
-const checkUserLoggedIn = asyncHandler(async (req, res) => {
+const checkUserLoggedIn = AsyncHandler(async (req, res) => {
     const user = req.user;
 
     if (!user?.accessToken) {

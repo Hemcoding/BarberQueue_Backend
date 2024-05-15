@@ -1,11 +1,11 @@
 import { Offer } from "../models/offer.model.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { createApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 
-const createOffer = asyncHandler(async (req, res) => {
+const createOffer = AsyncHandler(async (req, res) => {
         const user = await User.findById(req.user?._id).select(
             "-firstname -username -email -profilePicture -loyaltyPoints -refreshToken"
         );
@@ -49,7 +49,7 @@ const createOffer = asyncHandler(async (req, res) => {
             .json(ApiResponse(200, createdOffer, "Offer created successfully"));
     });
 
-const updateOffer = asyncHandler(async (req, res) => {
+const updateOffer = AsyncHandler(async (req, res) => {
     const user = await User.findById(req.user?._id).select(
         "-firstname -username -email -profilePicture -loyaltyPoints -refreshToken"
     );
@@ -105,7 +105,7 @@ const updateOffer = asyncHandler(async (req, res) => {
         .json(ApiResponse(200, createdOffer, "Offer created successfully"));
 });
 
-const getOffer = asyncHandler(async (req, res) => {
+const getOffer = AsyncHandler(async (req, res) => {
     const offers = await Offer.find().select("-startDate, -endDate");
 
     if (!offers) {

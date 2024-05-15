@@ -1,9 +1,9 @@
 import { Loyalty } from "../models/loyalty.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { createApiError } from "../utils/apiError.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { AsyncHandler } from "../utils/AsyncHandler.js";
 
-const addPoints = asyncHandler(async(req, res) => {
+const addPoints = AsyncHandler(async(req, res) => {
         console.log(req.user._id);
         const loyalty = await Loyalty.findOne({user: req.user._id})
 
@@ -42,7 +42,7 @@ const addPoints = asyncHandler(async(req, res) => {
         )
 })
 
-const redeemPoints = asyncHandler(async(req, res) => {
+const redeemPoints = AsyncHandler(async(req, res) => {
         const {points} = req.body
 
         if(!points){
@@ -83,7 +83,7 @@ const redeemPoints = asyncHandler(async(req, res) => {
         )
 })
 
-const getLoyaltyPoints = asyncHandler(async(req, res) => {
+const getLoyaltyPoints = AsyncHandler(async(req, res) => {
         const loyalty = await Loyalty.findOne({user: req.user?._id})
 
         console.log("you call me")

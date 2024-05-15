@@ -2,13 +2,13 @@ import { Staff } from "../models/staff.model.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { createApiError } from "../utils/apiError.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { AsyncHandler } from "../utils/AsyncHandler.js";
 import {
     deleteFromCloudinary,
     uploadOnCloudinary,
 } from "../utils/cloudinary.js";
 
-const createStaff = asyncHandler(async (req, res) => {
+const createStaff = AsyncHandler(async (req, res) => {
     const { name, specialistIn } = req.body;
 
     if (!name && !specialistIn) {
@@ -60,7 +60,7 @@ const createStaff = asyncHandler(async (req, res) => {
         );
 });
 
-const deleteStaff = asyncHandler(async (req, res) => {
+const deleteStaff = AsyncHandler(async (req, res) => {
     const { id } = req.body;
     console.log(id);
 
@@ -81,7 +81,7 @@ const deleteStaff = asyncHandler(async (req, res) => {
         .json(ApiResponse(200, {}, "Staff member deleted successfully"));
 });
 
-const updateStaff = asyncHandler(async (req, res) => {
+const updateStaff = AsyncHandler(async (req, res) => {
     const { id, specialistIn } = req.body;
 
     console.log("specialistIn: ", specialistIn);
@@ -141,7 +141,7 @@ const updateStaff = asyncHandler(async (req, res) => {
         );
 });
 
-const getStaff = asyncHandler(async (req, res) => {
+const getStaff = AsyncHandler(async (req, res) => {
     const staff = await Staff.find();
 
     if (!staff) {

@@ -1,9 +1,9 @@
 import { Service } from "../models/service.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { createApiError } from "../utils/apiError.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { AsyncHandler } from "../utils/AsyncHandler.js";
 
-const createService = asyncHandler(async(req,res) => {
+const createService = AsyncHandler(async(req,res) => {
     const {serviceName, duration, price} = req.body
 
     const existedService = await Service.findOne({
@@ -44,7 +44,7 @@ const createService = asyncHandler(async(req,res) => {
 
 })
 
-const updateService =asyncHandler(async(req,res)=>{
+const updateService =AsyncHandler(async(req,res)=>{
         const{id, serviceName, duration, price} = req.body
 
         const service = await Service.findByIdAndUpdate(
@@ -71,7 +71,7 @@ const updateService =asyncHandler(async(req,res)=>{
                 )
 })
 
-const deleteService = asyncHandler(async(req,res) => {
+const deleteService = AsyncHandler(async(req,res) => {
         const {id} = req.body
         console.log("serviceid: ",id);
 
@@ -100,7 +100,7 @@ const deleteService = asyncHandler(async(req,res) => {
         )
 })
 
-const getService = asyncHandler(async(req, res) => {
+const getService = AsyncHandler(async(req, res) => {
         const services = await Service.find()
 
         if(!services){

@@ -1,7 +1,7 @@
 import { Appointment } from "../models/appointment.model.js";
 import { Queue } from "../models/queue.model.js";
 import { createApiError } from "../utils/apiError.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { Artist } from "../models/artist.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
@@ -57,7 +57,7 @@ const generateToken = async (appointment) => {
     return token;
 };
 
-const addToQueue = asyncHandler(async (req, res) => {
+const addToQueue = AsyncHandler(async (req, res) => {
     const { id, amountPaid } = req.body;
 
     console.log("id:", id, "amount: ", amountPaid);
@@ -228,7 +228,7 @@ const addToQueue = asyncHandler(async (req, res) => {
         );
 });
 
-const deleteFromQueue = asyncHandler(async (req, res) => {
+const deleteFromQueue = AsyncHandler(async (req, res) => {
     const { id, appointmentId } = req.body;
 
     console.log(id);
@@ -275,7 +275,7 @@ const deleteFromQueue = asyncHandler(async (req, res) => {
         );
 });
 
-const getQueue = asyncHandler(async (req, res) => {
+const getQueue = AsyncHandler(async (req, res) => {
     const { date, artistIds } = req.body;
 
     console.log("date: ", date, "artistIds: ", artistIds);

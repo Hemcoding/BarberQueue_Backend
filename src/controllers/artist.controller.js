@@ -1,9 +1,9 @@
 import { Artist } from "../models/artist.model.js";
 import { createApiError } from "../utils/apiError.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
-const addArtist = asyncHandler(async (req, res) => {
+const addArtist = AsyncHandler(async (req, res) => {
     const { artistName } = req.body;
 
     if (!artistName) {
@@ -29,7 +29,7 @@ const addArtist = asyncHandler(async (req, res) => {
         .json(ApiResponse(200, createdArtist, "Artist added successfully"));
 });
 
-const deleteArtist = asyncHandler(async(req, res) => {
+const deleteArtist = AsyncHandler(async(req, res) => {
         const {id} = req.body
 
         if(!id){
@@ -54,7 +54,7 @@ const deleteArtist = asyncHandler(async(req, res) => {
         
 })
 
-const getArtist = asyncHandler(async(req, res) => {
+const getArtist = AsyncHandler(async(req, res) => {
         const artists = await Artist.find();
 
         if(!artists){

@@ -1,9 +1,9 @@
 import { ShopTime } from "../models/shoptime.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { createApiError } from "../utils/apiError.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { AsyncHandler } from "../utils/AsyncHandler.js";
 
-const setShopTime = asyncHandler(async (req, res) => {
+const setShopTime = AsyncHandler(async (req, res) => {
     const { openingTime, closingTime, lunchBreakStart, lunchBreakEnd } =
         req.body;
 
@@ -31,7 +31,7 @@ const setShopTime = asyncHandler(async (req, res) => {
         );
 });
 
-const updateShopTime = asyncHandler(async (req, res) => {
+const updateShopTime = AsyncHandler(async (req, res) => {
     const { id, openingTime, closingTime, lunchBreakStart, lunchBreakEnd } =
         req.body;
 
@@ -79,7 +79,7 @@ const updateShopTime = asyncHandler(async (req, res) => {
         );
 });
 
-const getShopTime = asyncHandler(async (req, res) => {
+const getShopTime = AsyncHandler(async (req, res) => {
     const shopTime = await ShopTime.find();
 
     if (!shopTime) {

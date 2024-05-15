@@ -1,7 +1,7 @@
 import { Queue } from "../models/queue.model.js";
 import { User } from "../models/user.model.js";
 import { createApiError } from "../utils/apiError.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { AsyncHandler } from "../utils/AsyncHandler.js";
 import dayjs from "dayjs";
 import utcToLocal from "dayjs/plugin/utc.js";
 import customParseFormat from "dayjs/plugin/customParseFormat.js";
@@ -14,7 +14,7 @@ import { Artist } from "../models/artist.model.js";
 dayjs.extend(utcToLocal);
 dayjs.extend(customParseFormat);
 
-const bookAppointment = asyncHandler(async (req, res) => {
+const bookAppointment = AsyncHandler(async (req, res) => {
     const { date, services, paymentType, artistId, redeemPoints } = req.body;
 
     let pointsToRupeesRatio = 5;
@@ -233,7 +233,7 @@ const bookAppointment = asyncHandler(async (req, res) => {
         );
 });
 
-const getUpcomingAppointments = asyncHandler(async (req, res) => {
+const getUpcomingAppointments = AsyncHandler(async (req, res) => {
     const userId = req.user._id;
 
     const upcomingAppointments = await Appointment.find({
@@ -252,7 +252,7 @@ const getUpcomingAppointments = asyncHandler(async (req, res) => {
         );
 });
 
-const getAppointmentHistory = asyncHandler(async (req, res) => {
+const getAppointmentHistory = AsyncHandler(async (req, res) => {
     const userId = req.user._id;
 
     const appointmentHistory = await Appointment.find({
@@ -271,7 +271,7 @@ const getAppointmentHistory = asyncHandler(async (req, res) => {
         );
 });
 
-const getAppointment = asyncHandler(async (req, res) => {
+const getAppointment = AsyncHandler(async (req, res) => {
     const { id } = req.body;
 
     console.log("appointmentid: ", id);

@@ -3,9 +3,9 @@ import { Appointment } from "../models/appointment.model.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { createApiError } from "../utils/apiError.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { AsyncHandler } from "../utils/AsyncHandler.js";
 
-const cardData = asyncHandler(async (req, res) => {
+const cardData = AsyncHandler(async (req, res) => {
     const count = await User.countDocuments();
 
     if (!count) {
@@ -61,7 +61,7 @@ const cardData = asyncHandler(async (req, res) => {
     );
 });
 
-const getYearlyEarnings = asyncHandler(async (req, res) => {
+const getYearlyEarnings = AsyncHandler(async (req, res) => {
     const { year } = req.body;
 
     if (!year || isNaN(year) || year < 0) {
@@ -114,7 +114,7 @@ const getYearlyEarnings = asyncHandler(async (req, res) => {
     );
 });
 
-const getWeeklyAppointmentCount = asyncHandler(async (req, res) => {
+const getWeeklyAppointmentCount = AsyncHandler(async (req, res) => {
         const currentDate = new Date();
     
         const firstDayOfWeek = new Date(currentDate);
@@ -150,7 +150,7 @@ const getWeeklyAppointmentCount = asyncHandler(async (req, res) => {
     
     
 
-const getPopularServices = asyncHandler(async (req, res) => {
+const getPopularServices = AsyncHandler(async (req, res) => {
     const confirmedAppointments = await Appointment.find({
         status: "confirmed",
     }).populate("services");
