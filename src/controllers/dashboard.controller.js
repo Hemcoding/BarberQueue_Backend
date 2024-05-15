@@ -83,7 +83,7 @@ const getYearlyEarnings = AsyncHandler(async (req, res) => {
         {
             $project: {
                 _id: 0,
-                date: { $dateFromString: { dateString: "$date" } }, 
+                date: { $dateFromString: { dateString: "$date" } },
                 serviceCharges: 1,
             },
         },
@@ -101,7 +101,7 @@ const getYearlyEarnings = AsyncHandler(async (req, res) => {
     const yearlyEarningsData = Array(12).fill(0);
 
     yearlyEarnings.forEach((monthData) => {
-        const month = monthData._id - 1; 
+        const month = monthData._id - 1;
         yearlyEarningsData[month] = monthData.totalServiceCharges;
     });
 
@@ -115,40 +115,55 @@ const getYearlyEarnings = AsyncHandler(async (req, res) => {
 });
 
 const getWeeklyAppointmentCount = AsyncHandler(async (req, res) => {
-        const currentDate = new Date();
-    
-        const firstDayOfWeek = new Date(currentDate);
-        firstDayOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
-    
-        const lastDayOfWeek = new Date(currentDate);
-        lastDayOfWeek.setDate(currentDate.getDate() + (6 - currentDate.getDay()));
-    
-        const appointmentsForCurrentWeek = await Appointment.find({
-            date: { $gte: firstDayOfWeek, $lte: lastDayOfWeek },
-            status: { $in: ["booked", "confirmed"] },
-        });
-    
-        const weeklyCounts = Array(7).fill([0, 0]);
-    
-        appointmentsForCurrentWeek.forEach((appointment) => {
-            const dayOfWeek = new Date(appointment.date).getDay();
-            if (appointment.status === "booked") {
-                weeklyCounts[dayOfWeek][0] += 1; 
-            } else if (appointment.status === "confirmed") {
-                weeklyCounts[dayOfWeek][1] += 1; 
-        }});
-    
-        return res.status(200).json(
+    const currentDate = new Date();
+    const firstDayOfWeek = new Date(currentDate);
+    firstDayOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+    const lastDayOfWeek = new Date(currentDate);
+    lastDayOfWeek.setDate(currentDate.getDate() + (6 - currentDate.getDay()));
+
+    const formatDate = (date) => date.toISOString().slice(0, 10);
+    const formattedFirstDayOfWeek = formatDate(firstDayOfWeek);
+    const formattedLastDayOfWeek = formatDate(lastDayOfWeek);
+
+    console.log("days: ", formattedFirstDayOfWeek, formattedLastDayOfWeek);
+
+    const appointmentsForCurrentWeek = await Appointment.find({
+        date: { $gte: formattedFirstDayOfWeek, $lte: formattedLastDayOfWeek },
+        status: { $in: ["booked", "confirmed"] },
+    });
+
+    console.log("appointmentsofweek: ", appointmentsForCurrentWeek);
+
+    let weeklyCounts = Array.from({ length: 7 }, () => [0, 0]);
+
+    console.log("weekly count: ", weeklyCounts)
+
+    await Promise.all(appointmentsForCurrentWeek.map(async (appointment) => {
+        const dayOfWeek = new Date(appointment.date).getDay();
+        console.log("day of week: ", dayOfWeek);
+        if (appointment.status === "booked") {
+            weeklyCounts[dayOfWeek][0] += 1; 
+        } else if (appointment.status === "confirmed") {
+            weeklyCounts[dayOfWeek][1] += 1; 
+        }
+    }));
+
+    for (let i = 0; i < 7; i++) {
+        if (weeklyCounts[i][0] === 0 && weeklyCounts[i][1] === 0) {
+            weeklyCounts[i] = [0, 0];
+        }
+    }
+    return res
+        .status(200)
+        .json(
             ApiResponse(
                 200,
                 weeklyCounts,
                 "Weekly appointment counts retrieved successfully"
             )
         );
-    });
-    
-    
-    
+});
+
 
 const getPopularServices = AsyncHandler(async (req, res) => {
     const confirmedAppointments = await Appointment.find({
@@ -179,4 +194,9 @@ const getPopularServices = AsyncHandler(async (req, res) => {
         );
 });
 
-export { cardData, getYearlyEarnings, getWeeklyAppointmentCount, getPopularServices };
+export {
+    cardData,
+    getYearlyEarnings,
+    getWeeklyAppointmentCount,
+    getPopularServices,
+};
