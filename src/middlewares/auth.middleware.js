@@ -1,5 +1,5 @@
 import { User } from "../models/user.model.js";
-import { createApiError } from "../utils/apiError.js";
+import { CreateApiError } from "../utils/CreateApiError.js";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 import jwt from "jsonwebtoken";
 
@@ -13,7 +13,7 @@ export const verifyJWT = AsyncHandler(async (req, res, next) => {
             console.log(token);
     
         if (!token) {
-            throw createApiError(401, "Unauthorized request");
+            throw CreateApiError(401, "Unauthorized request");
         }
     
         const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
@@ -27,13 +27,13 @@ export const verifyJWT = AsyncHandler(async (req, res, next) => {
         console.log(user);
     
         if(!user){
-            throw createApiError(401, "Invalid Access Token")
+            throw CreateApiError(401, "Invalid Access Token")
         }
     
         req.user = user
         next()
     } catch (error) {
-        throw createApiError(401,error || "Invalid Access Token")
+        throw CreateApiError(401,error || "Invalid Access Token")
     }
     
 });

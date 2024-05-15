@@ -1,6 +1,6 @@
 import { Appointment } from "../models/appointment.model.js";
 import { Queue } from "../models/queue.model.js";
-import { createApiError } from "../utils/apiError.js";
+import { CreateApiError } from "../utils/CreateApiError.js";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { Artist } from "../models/artist.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -71,7 +71,7 @@ const addToQueue = AsyncHandler(async (req, res) => {
     console.log("updateAppointment: ", updateAppointment);
 
     if (!updateAppointment) {
-        throw createApiError(
+        throw CreateApiError(
             500,
             "An error occured while updating status in appointment"
         );
@@ -82,7 +82,7 @@ const addToQueue = AsyncHandler(async (req, res) => {
     console.log("appointment: ", appointment)
 
     if (!appointment) {
-        throw createApiError(
+        throw CreateApiError(
             500,
             "An error occured while fetching appointment"
         );
@@ -108,7 +108,7 @@ const addToQueue = AsyncHandler(async (req, res) => {
     console.log("appointment in queue: ", appointmentInQueue)
 
     if (!appointmentInQueue) {
-        throw createApiError(
+        throw CreateApiError(
             500,
             "An error occured while adding appointment into queue"
         );
@@ -120,7 +120,7 @@ const addToQueue = AsyncHandler(async (req, res) => {
     const loyalty = await Loyalty.findOne({ user: req.user._id }); 
 
     if (!loyalty) {
-        throw createApiError(400, "loyalty points not found");
+        throw CreateApiError(400, "loyalty points not found");
     }
 
     const { earnedPoints, balancePoints, redeemedPoints } = loyalty;
@@ -134,7 +134,7 @@ const addToQueue = AsyncHandler(async (req, res) => {
     );
 
     if (!loyaltyPoints) {
-        throw createApiError(500, "An error occured while adding points");
+        throw CreateApiError(500, "An error occured while adding points");
     }
 
     const loyaltyPoint = await Loyalty.findOneAndUpdate(
@@ -147,14 +147,14 @@ const addToQueue = AsyncHandler(async (req, res) => {
     );
 
     if (!loyaltyPoint) {
-        throw createApiError(500, "An error occured while updating redeem points");
+        throw CreateApiError(500, "An error occured while updating redeem points");
     }
 
 
     const addedLoyalty = await Loyalty.findById(loyaltyPoints?._id);
 
     if (!addedLoyalty) {
-        throw createApiError( 500, "An error occured while feching data");
+        throw CreateApiError( 500, "An error occured while feching data");
     }
 
     const appointmentData = await Appointment.findById(addedAppointment.appointment)
@@ -234,7 +234,7 @@ const deleteFromQueue = AsyncHandler(async (req, res) => {
     console.log(id);
 
     if (!id) {
-        throw createApiError(400, "Id is required");
+        throw CreateApiError(400, "Id is required");
     }
 
 
@@ -253,7 +253,7 @@ const deleteFromQueue = AsyncHandler(async (req, res) => {
     );
 
     if (!confirmedAppointment) {
-        throw createApiError(
+        throw CreateApiError(
             500,
             "An error occured while updating appointment"
         );
@@ -262,7 +262,7 @@ const deleteFromQueue = AsyncHandler(async (req, res) => {
     const deletedAppointmentFromQueue = await Queue.deleteOne({ _id: id });
 
     if (!deletedAppointmentFromQueue) {
-        throw createApiError(
+        throw CreateApiError(
             500,
             "An error occured while removing appointment from queue"
         );
@@ -281,7 +281,7 @@ const getQueue = AsyncHandler(async (req, res) => {
     console.log("date: ", date, "artistIds: ", artistIds);
 
     if (!date || !artistIds || artistIds.length === 0) {
-        throw createApiError(400, "Date and artistIds are required");
+        throw CreateApiError(400, "Date and artistIds are required");
     }
 
     const queuesByArtist = {};

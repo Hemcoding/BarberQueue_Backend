@@ -1,6 +1,6 @@
 import { Service } from "../models/service.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { createApiError } from "../utils/apiError.js";
+import { CreateApiError } from "../utils/CreateApiError.js";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 
 const createService = AsyncHandler(async(req,res) => {
@@ -11,13 +11,13 @@ const createService = AsyncHandler(async(req,res) => {
     })
 
     if(existedService){
-        throw createApiError(409, "service already exist")
+        throw CreateApiError(409, "service already exist")
     }
 
     console.log(serviceName, duration, price);
 
     if(!serviceName && !duration && !price){
-        throw createApiError(400, "All fields are required")
+        throw CreateApiError(400, "All fields are required")
     }
 
     const service = await Service.create({
@@ -27,7 +27,7 @@ const createService = AsyncHandler(async(req,res) => {
     })
 
     if(!service){
-        throw createApiError(500, "Error occure while creating service")
+        throw CreateApiError(500, "Error occure while creating service")
     }
 
     const createdService = await Service.findById(service._id)
@@ -57,7 +57,7 @@ const updateService =AsyncHandler(async(req,res)=>{
                 )
 
                 if(!service){
-                        throw createApiError(500, "Some error is occured while updating service")
+                        throw CreateApiError(500, "Some error is occured while updating service")
                 }
 
                 return res
@@ -80,13 +80,13 @@ const deleteService = AsyncHandler(async(req,res) => {
         console.log(service);
 
         if(!service){
-                throw createApiError(400, "service doesn't exist")
+                throw CreateApiError(400, "service doesn't exist")
         }
         
         const deletedService = await Service.deleteOne({_id: id})
 
         if(!deletedService){
-                throw createApiError(500, "Error occured while deleting service")
+                throw CreateApiError(500, "Error occured while deleting service")
         }
 
         return res
@@ -104,7 +104,7 @@ const getService = AsyncHandler(async(req, res) => {
         const services = await Service.find()
 
         if(!services){
-                throw createApiError(500, "Error occured while fetching services")
+                throw CreateApiError(500, "Error occured while fetching services")
         }
 
         return res

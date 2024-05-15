@@ -2,14 +2,14 @@ import dayjs from "dayjs";
 import { Appointment } from "../models/appointment.model.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { createApiError } from "../utils/apiError.js";
+import { CreateApiError } from "../utils/CreateApiError.js";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 
 const cardData = AsyncHandler(async (req, res) => {
     const count = await User.countDocuments();
 
     if (!count) {
-        throw createApiError(500, "An error occured while fetching user count");
+        throw CreateApiError(500, "An error occured while fetching user count");
     }
 
     const today = dayjs().startOf("day");
@@ -48,7 +48,7 @@ const cardData = AsyncHandler(async (req, res) => {
     console.log("total Profit:", totalProfit);
 
     if (!totalProfit) {
-        throw createApiError(500, "An error occured while fetching profit");
+        throw CreateApiError(500, "An error occured while fetching profit");
     }
 
     return res.status(200).json(
@@ -65,7 +65,7 @@ const getYearlyEarnings = AsyncHandler(async (req, res) => {
     const { year } = req.body;
 
     if (!year || isNaN(year) || year < 0) {
-        throw createApiError(400, "Invalid year provided");
+        throw CreateApiError(400, "Invalid year provided");
     }
 
     const startDate = `${year}-01-01`;

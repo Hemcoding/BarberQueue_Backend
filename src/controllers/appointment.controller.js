@@ -1,6 +1,6 @@
 import { Queue } from "../models/queue.model.js";
 import { User } from "../models/user.model.js";
-import { createApiError } from "../utils/apiError.js";
+import { CreateApiError } from "../utils/CreateApiError.js";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 import dayjs from "dayjs";
 import utcToLocal from "dayjs/plugin/utc.js";
@@ -35,7 +35,7 @@ const bookAppointment = AsyncHandler(async (req, res) => {
     );
 
     if (!date && !services && !paymentType && !artistId) {
-        throw createApiError(400, "All fields are required");
+        throw CreateApiError(400, "All fields are required");
     }
 
     let isWalkInCustomer,
@@ -187,7 +187,7 @@ const bookAppointment = AsyncHandler(async (req, res) => {
     const artist = await Artist.findById(artistId);
 
     if (!artist) {
-        throw createApiError(500, "artist is not found");
+        throw CreateApiError(500, "artist is not found");
     }
 
     const appointment = await Appointment.create({
@@ -207,7 +207,7 @@ const bookAppointment = AsyncHandler(async (req, res) => {
     });
 
     if (!appointment) {
-        throw createApiError(
+        throw CreateApiError(
             500,
             "An error occured while creating appointment"
         );
@@ -216,7 +216,7 @@ const bookAppointment = AsyncHandler(async (req, res) => {
     const createdAppointment = await Appointment.findById(appointment?._id);
 
     if (!createdAppointment) {
-        throw createApiError(
+        throw CreateApiError(
             500,
             "An error occured while fetching appointment"
         );
@@ -277,13 +277,13 @@ const getAppointment = AsyncHandler(async (req, res) => {
     console.log("appointmentid: ", id);
 
     if (!id) {
-        throw createApiError(400, "Id is required");
+        throw CreateApiError(400, "Id is required");
     }
 
     const appointment = await Appointment.findById(id);
 
     if (!appointment) {
-        throw createApiError(
+        throw CreateApiError(
             500,
             "An error occured while fetching appointment"
         );

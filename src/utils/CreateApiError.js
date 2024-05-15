@@ -1,4 +1,4 @@
-function createApiError(statusCode, message = "Something went wrong", errors = [], stack = "") {
+function CreateApiError(statusCode, message = "Something went wrong", errors = [], stack = "") {
         const error = {
             statusCode: statusCode,
             data: null,
@@ -16,4 +16,4 @@ function createApiError(statusCode, message = "Something went wrong", errors = [
         return error;
     }
     
-    export { createApiError };
+    export { CreateApiError };

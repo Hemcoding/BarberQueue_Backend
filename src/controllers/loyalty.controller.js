@@ -1,6 +1,6 @@
 import { Loyalty } from "../models/loyalty.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { createApiError } from "../utils/apiError.js";
+import { CreateApiError } from "../utils/CreateApiError.js";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 
 const addPoints = AsyncHandler(async(req, res) => {
@@ -8,7 +8,7 @@ const addPoints = AsyncHandler(async(req, res) => {
         const loyalty = await Loyalty.findOne({user: req.user._id})
 
         if(!loyalty){
-                throw createApiError(400, "loyalty points not found")
+                throw CreateApiError(400, "loyalty points not found")
         }
 
         const {earnedPoints, balancePoints} = loyalty;
@@ -22,13 +22,13 @@ const addPoints = AsyncHandler(async(req, res) => {
         )
 
         if(!loyaltyPoints){
-                throw createApiError(500, "An error occured while adding points")
+                throw CreateApiError(500, "An error occured while adding points")
         }
 
         const addedLoyalty = await Loyalty.findById(loyaltyPoints?._id)
 
         if(!addedLoyalty){
-                throw createApiError(500, "An error occured while feching data")
+                throw CreateApiError(500, "An error occured while feching data")
         }
 
         return res 
@@ -46,13 +46,13 @@ const redeemPoints = AsyncHandler(async(req, res) => {
         const {points} = req.body
 
         if(!points){
-                throw createApiError(400, "Points are required")
+                throw CreateApiError(400, "Points are required")
         }
 
         const loyalty = await Loyalty.findOne({user: req.user._id})
 
         if(!loyalty){
-                throw createApiError(400, "loyalty points not found")
+                throw CreateApiError(400, "loyalty points not found")
         }
 
         const {redeemedPoints, balancePoints} = loyalty;
@@ -67,7 +67,7 @@ const redeemPoints = AsyncHandler(async(req, res) => {
         )
 
         if(!redeemedLoyalty){
-                throw createApiError(500, "An error occured while updating points")
+                throw CreateApiError(500, "An error occured while updating points")
         }
 
         const updatedLoyalty = await Loyalty.findById(redeemedLoyalty?._id)
@@ -89,7 +89,7 @@ const getLoyaltyPoints = AsyncHandler(async(req, res) => {
         console.log("you call me")
 
         if(!loyalty){
-                throw createApiError(500, "An error occured while fetching loyalty")
+                throw CreateApiError(500, "An error occured while fetching loyalty")
         }
 
         return res

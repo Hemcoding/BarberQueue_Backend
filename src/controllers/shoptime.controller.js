@@ -1,6 +1,6 @@
 import { ShopTime } from "../models/shoptime.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { createApiError } from "../utils/apiError.js";
+import { CreateApiError } from "../utils/CreateApiError.js";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 
 const setShopTime = AsyncHandler(async (req, res) => {
@@ -8,7 +8,7 @@ const setShopTime = AsyncHandler(async (req, res) => {
         req.body;
 
     if (!openingTime && !closingTime && !lunchBreakStart && !lunchBreakEnd) {
-        throw createApiError(400, "All fields are required");
+        throw CreateApiError(400, "All fields are required");
     }
 
     const shopTime = await ShopTime.create({
@@ -19,7 +19,7 @@ const setShopTime = AsyncHandler(async (req, res) => {
     });
 
     if (!shopTime) {
-        throw createApiError(500, "An error occured while creating shopTime");
+        throw CreateApiError(500, "An error occured while creating shopTime");
     }
 
     const createdShopTime = await ShopTime.findById(shopTime?._id);
@@ -50,7 +50,7 @@ const updateShopTime = AsyncHandler(async (req, res) => {
         !lunchBreakStart &&
         !lunchBreakEnd
     ) {
-        throw createApiError(400, "All fields are required");
+        throw CreateApiError(400, "All fields are required");
     }
 
     const shopTime = await ShopTime.findByIdAndUpdate(
@@ -67,7 +67,7 @@ const updateShopTime = AsyncHandler(async (req, res) => {
     );
 
     if (!shopTime) {
-        throw createApiError(500, "An error occured while updating shop time");
+        throw CreateApiError(500, "An error occured while updating shop time");
     }
 
     const updatedShopTime = await ShopTime.findById(shopTime?._id);
@@ -83,7 +83,7 @@ const getShopTime = AsyncHandler(async (req, res) => {
     const shopTime = await ShopTime.find();
 
     if (!shopTime) {
-        throw createApiError(500, "An error occured while fetching shop time");
+        throw CreateApiError(500, "An error occured while fetching shop time");
     }
 
     return res

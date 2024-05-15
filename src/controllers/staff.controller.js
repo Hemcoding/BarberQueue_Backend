@@ -1,7 +1,7 @@
 import { Staff } from "../models/staff.model.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { createApiError } from "../utils/apiError.js";
+import { CreateApiError } from "../utils/CreateApiError.js";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 import {
     deleteFromCloudinary,
@@ -12,25 +12,25 @@ const createStaff = AsyncHandler(async (req, res) => {
     const { name, specialistIn } = req.body;
 
     if (!name && !specialistIn) {
-        throw createApiError(400, "All fields are required");
+        throw CreateApiError(400, "All fields are required");
     }
 
     const existedStaff = await User.findOne({ name });
 
     if (existedStaff) {
-        throw createApiError(409, "Staff member already exist");
+        throw CreateApiError(409, "Staff member already exist");
     }
 
     const staffImageLocalPath = req.file?.path;
 
     if (!staffImageLocalPath) {
-        throw createApiError(400, "Staff Image is required");
+        throw CreateApiError(400, "Staff Image is required");
     }
 
     const staffImage = await uploadOnCloudinary(staffImageLocalPath);
 
     if (!staffImage) {
-        throw createApiError(500, "Server error while uploading staff image");
+        throw CreateApiError(500, "Server error while uploading staff image");
     }
 
     const staffMember = await Staff.create({
@@ -41,7 +41,7 @@ const createStaff = AsyncHandler(async (req, res) => {
     });
 
     if (!staffMember) {
-        throw createApiError(
+        throw CreateApiError(
             500,
             "An Error occured while creating staff member"
         );
@@ -67,13 +67,13 @@ const deleteStaff = AsyncHandler(async (req, res) => {
     const staffMember = await Staff.findById(id);
 
     if (!staffMember) {
-        throw createApiError(400, "Satff member doesn't exist");
+        throw CreateApiError(400, "Satff member doesn't exist");
     }
 
     const deletedStaffMember = await Staff.deleteOne({ _id: id });
 
     if (!deletedStaffMember) {
-        throw createApiError(500, "Error occured while deleting staff member");
+        throw CreateApiError(500, "Error occured while deleting staff member");
     }
 
     return res
@@ -92,14 +92,14 @@ const updateStaff = AsyncHandler(async (req, res) => {
         const staffImageLocalPath = req.file?.path;
 
         if (!staffImageLocalPath) {
-            throw createApiError(400, "Staff Image is required");
+            throw CreateApiError(400, "Staff Image is required");
         }
 
         newStaffImage = await uploadOnCloudinary(staffImageLocalPath);
         console.log("new: ", newStaffImage);
 
         if (!newStaffImage) {
-            throw createApiError(
+            throw CreateApiError(
                 500,
                 "Server error while uploading staff image"
             );
@@ -145,7 +145,7 @@ const getStaff = AsyncHandler(async (req, res) => {
     const staff = await Staff.find();
 
     if (!staff) {
-        throw createApiError(500, "An error occured while fetching staff");
+        throw CreateApiError(500, "An error occured while fetching staff");
     }
 
     return res
