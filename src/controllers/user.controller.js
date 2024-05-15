@@ -374,6 +374,8 @@ const updateUserProfilePicture = AsyncHandler(async (req, res) => {
         throw CreateApiError(400, "Profile picture is required");
     }
 
+    console.log("profilePictureLOcalPath: ", profilePictureLocalPath)
+
     const profilePicture = await uploadOnCloudinary(profilePictureLocalPath);
 
     if (!profilePicture.url) {
