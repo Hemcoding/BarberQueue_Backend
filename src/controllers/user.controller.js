@@ -121,6 +121,8 @@ const registerUser = AsyncHandler(async (req, res) => {
 const generateOtp = AsyncHandler(async (req, res) => {
     const { email } = req.body;
 
+    console.log("email: ", email)
+
     if (!email) {
         throw CreateApiError(400, "email is required");
     }
