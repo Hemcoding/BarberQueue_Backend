@@ -382,6 +382,8 @@ const updateUserProfilePicture = AsyncHandler(async (req, res) => {
         throw CreateApiError(500, "Error while updating an profile picture");
     }
 
+    console.log("ProfilePicture: ",profilePicture)
+
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
