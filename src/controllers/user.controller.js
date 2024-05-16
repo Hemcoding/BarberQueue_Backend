@@ -370,6 +370,8 @@ const updateAccountDetails = AsyncHandler(async (req, res) => {
 const updateUserProfilePicture = AsyncHandler(async (req, res) => {
     const profilePictureLocalPath = req.file?.path;
 
+    console.log("profilePictureLocalPath: ", profilePictureLocalPath)
+
     if (!profilePictureLocalPath) {
         throw CreateApiError(400, "Profile picture is required");
     }
